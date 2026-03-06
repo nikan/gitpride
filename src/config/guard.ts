@@ -125,3 +125,22 @@ export function validateExtraArgs(commandName: string, extraArgs: readonly strin
   checkDestructiveSubcommand(commandName, extraArgs);
   checkBlockedSequences(commandName, extraArgs);
 }
+
+/**
+ * Validate the combined base args + extra args together.
+ *
+ * This catches destructive sequences that span the boundary between
+ * configured base args and user-supplied extra args (e.g. base=['tag']
+ * combined with extra=['--delete', 'v1'] forms the blocked sequence
+ * "tag --delete").
+ */
+export function validateCombinedArgs(
+  commandName: string,
+  baseArgs: readonly string[],
+  extraArgs: readonly string[],
+): void {
+  // Extra args are already validated individually by validateExtraArgs;
+  // here we only need to check blocked sequences across the combined list.
+  const combined = [...baseArgs, ...extraArgs];
+  checkBlockedSequences(commandName, combined);
+}
