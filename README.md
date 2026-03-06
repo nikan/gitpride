@@ -13,13 +13,13 @@ A lightweight, configurable [Model Context Protocol (MCP)](https://modelcontextp
 
 The full implementation plan is in [`PLAN.md`](./PLAN.md). It is organized into 5 epics:
 
-| # | Epic | Description |
-|---|------|-------------|
-| 1 | Project Setup & Infrastructure | TypeScript project skeleton, tooling, CI |
-| 2 | MCP Server Core | Server entry point, tool registry, lifecycle |
-| 3 | Command Configuration System | JSON config schema, loader, non-destructive guard |
-| 4 | Git Commands Implementation | status, log, diff, branch, show, blame, remote |
-| 5 | Documentation & Distribution | README, docs, examples, npm packaging |
+| #   | Epic                           | Description                                       |
+| --- | ------------------------------ | ------------------------------------------------- |
+| 1   | Project Setup & Infrastructure | TypeScript project skeleton, tooling, CI          |
+| 2   | MCP Server Core                | Server entry point, tool registry, lifecycle      |
+| 3   | Command Configuration System   | JSON config schema, loader, non-destructive guard |
+| 4   | Git Commands Implementation    | status, log, diff, branch, show, blame, remote    |
+| 5   | Documentation & Distribution   | README, docs, examples, npm packaging             |
 
 ## Creating the GitHub Epics and Issues
 

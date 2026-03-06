@@ -37,15 +37,15 @@ A lightweight, configurable [Model Context Protocol (MCP)](https://modelcontextp
 
 ### Key Design Decisions
 
-| Decision | Choice | Reason |
-|---|---|---|
-| Language | TypeScript | Type safety, great MCP SDK support |
-| Transport | stdio (default) | Standard for local dev MCP servers |
-| Config format | JSON (with JSON Schema) | Widely understood, easy to edit |
-| Git execution | `child_process.spawn` | No extra git library needed |
-| MCP SDK | `@modelcontextprotocol/sdk` | Official SDK |
-| Test framework | Vitest | Fast, ESM-friendly |
-| Linter | ESLint + Prettier | Industry standard |
+| Decision       | Choice                      | Reason                             |
+| -------------- | --------------------------- | ---------------------------------- |
+| Language       | TypeScript                  | Type safety, great MCP SDK support |
+| Transport      | stdio (default)             | Standard for local dev MCP servers |
+| Config format  | JSON (with JSON Schema)     | Widely understood, easy to edit    |
+| Git execution  | `child_process.spawn`       | No extra git library needed        |
+| MCP SDK        | `@modelcontextprotocol/sdk` | Official SDK                       |
+| Test framework | Vitest                      | Fast, ESM-friendly                 |
+| Linter         | ESLint + Prettier           | Industry standard                  |
 
 ---
 
@@ -56,6 +56,7 @@ A lightweight, configurable [Model Context Protocol (MCP)](https://modelcontextp
 Stand up the Node.js/TypeScript project skeleton and developer tooling.
 
 **Issues:**
+
 1. Initialize Node.js/TypeScript project (`package.json`, `tsconfig.json`)
 2. Configure ESLint and Prettier
 3. Set up Vitest testing framework
@@ -68,11 +69,7 @@ Stand up the Node.js/TypeScript project skeleton and developer tooling.
 
 Implement the MCP protocol layer: entry point, tool registration, error handling.
 
-**Issues:**
-6. Implement MCP server entry point (`src/index.ts`) with stdio transport
-7. Implement tool registry — register and dispatch MCP tools
-8. Add structured error handling and logging
-9. Implement graceful shutdown (SIGINT / SIGTERM handling)
+**Issues:** 6. Implement MCP server entry point (`src/index.ts`) with stdio transport 7. Implement tool registry — register and dispatch MCP tools 8. Add structured error handling and logging 9. Implement graceful shutdown (SIGINT / SIGTERM handling)
 
 ---
 
@@ -80,11 +77,7 @@ Implement the MCP protocol layer: entry point, tool registration, error handling
 
 Allow non-developer operators to configure which git commands are exposed by editing a single JSON file.
 
-**Issues:**
-10. Design and document the command configuration schema (JSON Schema)
-11. Implement config file loader with validation
-12. Add non-destructive command guard (block write-commands)
-13. Support per-command argument allow-listing in the config
+**Issues:** 10. Design and document the command configuration schema (JSON Schema) 11. Implement config file loader with validation 12. Add non-destructive command guard (block write-commands) 13. Support per-command argument allow-listing in the config
 
 ---
 
@@ -92,14 +85,7 @@ Allow non-developer operators to configure which git commands are exposed by edi
 
 Implement the concrete MCP tools that wrap git commands.
 
-**Issues:**
-14. Implement `git status` tool
-15. Implement `git log` tool (configurable format and limit)
-16. Implement `git diff` tool (staged, unstaged, between refs)
-17. Implement `git branch` listing tool
-18. Implement `git show` tool (commit or object)
-19. Implement `git blame` tool
-20. Implement `git remote` info tool
+**Issues:** 14. Implement `git status` tool 15. Implement `git log` tool (configurable format and limit) 16. Implement `git diff` tool (staged, unstaged, between refs) 17. Implement `git branch` listing tool 18. Implement `git show` tool (commit or object) 19. Implement `git blame` tool 20. Implement `git remote` info tool
 
 ---
 
@@ -107,11 +93,7 @@ Implement the concrete MCP tools that wrap git commands.
 
 Ensure the project is easy to install, configure, and understand.
 
-**Issues:**
-21. Write comprehensive README (installation, configuration, usage)
-22. Document the command configuration file format with examples
-23. Add example `commands.config.json` files for common scenarios
-24. Prepare package for npm distribution (publish config, `bin` entry)
+**Issues:** 21. Write comprehensive README (installation, configuration, usage) 22. Document the command configuration file format with examples 23. Add example `commands.config.json` files for common scenarios 24. Prepare package for npm distribution (publish config, `bin` entry)
 
 ---
 
@@ -157,7 +139,7 @@ gitpride/
       "description": "Show the working tree status",
       "command": "git",
       "args": ["status"],
-      "allowExtraArgs": false
+      "allowExtraArgs": false,
     },
     {
       "name": "git_log",
@@ -168,11 +150,11 @@ gitpride/
       "extraArgsSchema": {
         "type": "object",
         "properties": {
-          "limit": { "type": "number", "default": 20 }
-        }
-      }
-    }
-  ]
+          "limit": { "type": "number", "default": 20 },
+        },
+      },
+    },
+  ],
 }
 ```
 
@@ -181,6 +163,7 @@ gitpride/
 ## Non-Destructive Guard
 
 The config loader and server core will **reject** any command whose `args` array includes:
+
 - Destructive git subcommands: `push`, `reset`, `clean`, `rebase`, `merge`, `checkout`, `commit`, `add`, `rm`, `mv`, `tag --delete`, `branch -D`, `stash drop`
 - Shell operators: `&&`, `||`, `;`, `|`, `>`, `>>`
 
@@ -190,9 +173,9 @@ This ensures the server can only be used to **read** repository state.
 
 ## Milestones
 
-| Milestone | Epics | Target |
-|---|---|---|
-| v0.1 — Skeleton | Epic 1, Epic 2 | Week 1 |
-| v0.2 — Configurable Commands | Epic 3 | Week 2 |
-| v0.3 — Full Command Set | Epic 4 | Week 3 |
-| v1.0 — Production Ready | Epic 5 | Week 4 |
+| Milestone                    | Epics          | Target |
+| ---------------------------- | -------------- | ------ |
+| v0.1 — Skeleton              | Epic 1, Epic 2 | Week 1 |
+| v0.2 — Configurable Commands | Epic 3         | Week 2 |
+| v0.3 — Full Command Set      | Epic 4         | Week 3 |
+| v1.0 — Production Ready      | Epic 5         | Week 4 |
