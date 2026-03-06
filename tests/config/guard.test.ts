@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   validateCommandArgs,
   validateExtraArgs,
+  validateCombinedArgs,
   DestructiveCommandError,
   BLOCKED_SUBCOMMANDS,
   BLOCKED_SHELL_OPERATORS,
@@ -124,5 +125,40 @@ describe('validateExtraArgs', () => {
     expect(() => validateExtraArgs('git_log', ['>', '/tmp/out'])).toThrow(
       DestructiveCommandError,
     );
+  });
+});
+
+describe('validateCombinedArgs', () => {
+  it('should block sequences spanning base and extra args', () => {
+    // base=['tag'], extra=['--delete', 'v1'] → combined=['tag', '--delete', 'v1']
+    expect(() => validateCombinedArgs('git_tag', ['tag'], ['--delete', 'v1'])).toThrow(
+      DestructiveCommandError,
+    );
+  });
+
+  it('should block "tag -d" spanning base and extra args', () => {
+    expect(() => validateCombinedArgs('git_tag', ['tag'], ['-d', 'v1'])).toThrow(
+      DestructiveCommandError,
+    );
+  });
+
+  it('should block "branch --delete" spanning base and extra args', () => {
+    expect(() => validateCombinedArgs('git_branch', ['branch'], ['--delete', 'feat'])).toThrow(
+      DestructiveCommandError,
+    );
+  });
+
+  it('should block "branch -D" spanning base and extra args', () => {
+    expect(() => validateCombinedArgs('git_branch', ['branch'], ['-D', 'feat'])).toThrow(
+      DestructiveCommandError,
+    );
+  });
+
+  it('should allow safe combined args', () => {
+    expect(() => validateCombinedArgs('git_tag', ['tag'], ['-l'])).not.toThrow();
+  });
+
+  it('should allow empty extra args', () => {
+    expect(() => validateCombinedArgs('git_log', ['log', '--oneline'], [])).not.toThrow();
   });
 });
