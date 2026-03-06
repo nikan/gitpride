@@ -1,0 +1,49 @@
+name: Create GitHub Issues from Plan
+
+on:
+  # Run automatically the first time this workflow lands on the default branch
+  push:
+    branches: [main]
+    paths:
+      - "PLAN.md"
+      - "scripts/create-issues.sh"
+  # Allow manual re-run from the Actions UI
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'yes' to confirm issue creation (this creates ~25 issues)"
+        required: true
+        default: ""
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+    # For push events: always run. For manual dispatch: require confirmation.
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm == 'yes')
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for existing epics (idempotency guard)
+        id: check
+        run: |
+          count=$(gh issue list --repo "$GITHUB_REPOSITORY" --label "Epic" --state open --json number --jq 'length')
+          echo "epic_count=$count" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Epic label and all issues
+        if: steps.check.outputs.epic_count == '0'
+        run: bash scripts/create-issues.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Skip message
+        if: steps.check.outputs.epic_count != '0'
+        run: echo "Epic issues already exist (${{ steps.check.outputs.epic_count }} found). Skipping creation."
