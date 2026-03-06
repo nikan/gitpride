@@ -5,6 +5,7 @@ import {
   validateCombinedArgs,
   DestructiveCommandError,
   BLOCKED_SUBCOMMANDS,
+  BLOCKED_ARG_SEQUENCES,
   BLOCKED_SHELL_OPERATORS,
 } from '../../src/config/guard.js';
 import { type CommandConfig } from '../../src/config/types.js';
@@ -160,5 +161,105 @@ describe('validateCombinedArgs', () => {
 
   it('should allow empty extra args', () => {
     expect(() => validateCombinedArgs('git_log', ['log', '--oneline'], [])).not.toThrow();
+  });
+});
+
+describe('newly blocked subcommands (issue #39)', () => {
+  const newlyBlocked = [
+    'switch',
+    'restore',
+    'cherry-pick',
+    'revert',
+    'pull',
+    'apply',
+    'am',
+    'init',
+    'clone',
+    'gc',
+    'prune',
+    'bisect',
+    'filter-branch',
+    'update-ref',
+  ];
+
+  for (const sub of newlyBlocked) {
+    it(`should block "${sub}" as a destructive subcommand`, () => {
+      expect(
+        () => validateCommandArgs(makeCommand({ args: [sub] })),
+        `expected "${sub}" to be blocked`,
+      ).toThrow(DestructiveCommandError);
+    });
+
+    it(`should block "${sub}" in extra args`, () => {
+      expect(
+        () => validateExtraArgs('test_cmd', [sub]),
+        `expected "${sub}" to be blocked in extra args`,
+      ).toThrow(DestructiveCommandError);
+    });
+  }
+});
+
+describe('newly blocked arg sequences (issue #39)', () => {
+  const newSequences: [string, string][] = [
+    ['branch', '-d'],
+    ['branch', '-m'],
+    ['branch', '-M'],
+    ['branch', '--move'],
+    ['branch', '-c'],
+    ['branch', '-C'],
+    ['branch', '--copy'],
+    ['remote', 'add'],
+    ['remote', 'remove'],
+    ['remote', 'rename'],
+    ['remote', 'set-url'],
+    ['worktree', 'add'],
+    ['worktree', 'remove'],
+    ['worktree', 'prune'],
+    ['submodule', 'add'],
+    ['submodule', 'init'],
+    ['submodule', 'update'],
+    ['submodule', 'deinit'],
+    ['notes', 'add'],
+    ['notes', 'remove'],
+    ['notes', 'edit'],
+    ['notes', 'merge'],
+    ['notes', 'prune'],
+    ['reflog', 'delete'],
+    ['reflog', 'expire'],
+  ];
+
+  for (const [first, second] of newSequences) {
+    it(`should block "${first} ${second}" sequence`, () => {
+      expect(
+        () => validateCommandArgs(makeCommand({ args: [first, second] })),
+        `expected "${first} ${second}" to be blocked`,
+      ).toThrow(DestructiveCommandError);
+    });
+  }
+
+  it('should still allow safe read-only usage of mixed-mode commands', () => {
+    expect(() => validateCommandArgs(makeCommand({ args: ['remote', '-v'] }))).not.toThrow();
+    expect(() => validateCommandArgs(makeCommand({ args: ['worktree', 'list'] }))).not.toThrow();
+    expect(() => validateCommandArgs(makeCommand({ args: ['submodule', 'status'] }))).not.toThrow();
+    expect(() => validateCommandArgs(makeCommand({ args: ['notes', 'list'] }))).not.toThrow();
+    expect(() => validateCommandArgs(makeCommand({ args: ['reflog', 'show'] }))).not.toThrow();
+  });
+
+  it('should block new sequences spanning base and extra args', () => {
+    expect(() => validateCombinedArgs('git_remote', ['remote'], ['add', 'origin'])).toThrow(
+      DestructiveCommandError,
+    );
+    expect(() => validateCombinedArgs('git_branch', ['branch'], ['-m', 'new-name'])).toThrow(
+      DestructiveCommandError,
+    );
+  });
+
+  it('should include all expected sequences in BLOCKED_ARG_SEQUENCES', () => {
+    for (const [first, second] of newSequences) {
+      const found = BLOCKED_ARG_SEQUENCES.some(
+        ([f, s]) => f === first && s === second,
+      );
+      expect(found, `expected [${first}, ${second}] in BLOCKED_ARG_SEQUENCES`).toBe(true);
+    }
   });
 });

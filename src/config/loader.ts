@@ -25,12 +25,12 @@ const ExtraArgsPropertySchema = z.object({
   description: z.string().optional(),
   default: z.union([z.string(), z.number(), z.boolean()]).optional(),
   enum: z.array(z.union([z.string(), z.number(), z.boolean()])).optional(),
-});
+}).strict();
 
 const ExtraArgsSchemaSchema = z.object({
   type: z.literal('object'),
   properties: z.record(z.string(), ExtraArgsPropertySchema),
-});
+}).strict();
 
 const CommandConfigSchema = z
   .object({
@@ -42,12 +42,26 @@ const CommandConfigSchema = z
     args: z.array(z.string()),
     allowExtraArgs: z.boolean(),
     extraArgsSchema: ExtraArgsSchemaSchema.optional(),
-  });
+  })
+  .strict()
+  .refine(
+    (cmd) => {
+      if (cmd.allowExtraArgs && !cmd.extraArgsSchema) return false;
+      if (!cmd.allowExtraArgs && cmd.extraArgsSchema) return false;
+      return true;
+    },
+    {
+      message:
+        'allowExtraArgs and extraArgsSchema must be consistent: ' +
+        'allowExtraArgs=true requires extraArgsSchema, ' +
+        'allowExtraArgs=false forbids extraArgsSchema',
+    },
+  );
 
 const CommandsConfigSchema = z.object({
   $schema: z.string().optional(),
   commands: z.array(CommandConfigSchema).min(1, 'at least one command must be defined'),
-});
+}).strict();
 
 // ── Error types ────────────────────────────────────────────────────
 
@@ -105,6 +119,26 @@ function validateGuard(commands: CommandConfig[]): string[] {
   return errors;
 }
 
+/** Validate that default values are compatible with enum constraints. */
+function validateDefaultInEnum(commands: CommandConfig[]): string[] {
+  const errors: string[] = [];
+  for (const cmd of commands) {
+    if (!cmd.extraArgsSchema) continue;
+    for (const [key, prop] of Object.entries(cmd.extraArgsSchema.properties)) {
+      if (prop.default !== undefined && prop.enum && prop.enum.length > 0) {
+        if (!prop.enum.includes(prop.default)) {
+          errors.push(
+            `Command "${cmd.name}": property "${key}" has default ` +
+            `value ${JSON.stringify(prop.default)} which is not in enum ` +
+            `[${prop.enum.map((v) => JSON.stringify(v)).join(', ')}]`,
+          );
+        }
+      }
+    }
+  }
+  return errors;
+}
+
 // ── Public API ─────────────────────────────────────────────────────
 
 /**
@@ -127,6 +161,7 @@ export function parseConfig(raw: unknown): CommandsConfig {
   const errors: string[] = [
     ...validateUniqueNames(config.commands),
     ...validateGuard(config.commands),
+    ...validateDefaultInEnum(config.commands),
   ];
 
   if (errors.length > 0) {
