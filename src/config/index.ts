@@ -6,6 +6,7 @@ export { loadConfig, parseConfig, ConfigLoadError, ConfigValidationError } from 
 export {
   validateCommandArgs,
   validateExtraArgs,
+  validateCombinedArgs,
   DestructiveCommandError,
   BLOCKED_SUBCOMMANDS,
   BLOCKED_ARG_SEQUENCES,

@@ -14,7 +14,7 @@ import { type CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { type ToolDefinition } from '../server/registry.js';
 import { ToolExecutionError } from '../server/errors.js';
 import { Logger } from '../server/logger.js';
-import { validateExtraArgs } from '../config/guard.js';
+import { validateExtraArgs, validateCombinedArgs } from '../config/guard.js';
 import { type CommandConfig, type ExtraArgsSchema, type ExtraArgsProperty } from '../config/types.js';
 import { runGit, type RunGitOptions } from './runner.js';
 
@@ -28,13 +28,30 @@ function propertyToZod(prop: ExtraArgsProperty): z.ZodTypeAny {
 
   switch (prop.type) {
     case 'string':
-      schema = z.string().describe(prop.description ?? '');
+      if (prop.enum && prop.enum.length > 0) {
+        const values = prop.enum.map(String) as [string, ...string[]];
+        schema = z.enum(values).describe(prop.description ?? '');
+      } else {
+        schema = z.string().describe(prop.description ?? '');
+      }
       break;
     case 'number':
-      schema = z.number().describe(prop.description ?? '');
+      if (prop.enum && prop.enum.length > 0) {
+        const literals = prop.enum.map((v) => z.literal(Number(v)));
+        schema = z.union(literals as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]])
+          .describe(prop.description ?? '');
+      } else {
+        schema = z.number().describe(prop.description ?? '');
+      }
       break;
     case 'boolean':
-      schema = z.boolean().describe(prop.description ?? '');
+      if (prop.enum && prop.enum.length > 0) {
+        const literals = prop.enum.map((v) => z.literal(Boolean(v)));
+        schema = z.union(literals as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]])
+          .describe(prop.description ?? '');
+      } else {
+        schema = z.boolean().describe(prop.description ?? '');
+      }
       break;
   }
 
@@ -142,10 +159,11 @@ export function buildToolDefinition(
       if (config.allowExtraArgs && args && Object.keys(args).length > 0) {
         const extraArgs = buildExtraCliArgs(config, args);
 
-        // Validate extra args through the guard
+        // Validate extra args individually and combined with base args
         if (extraArgs.length > 0) {
           try {
             validateExtraArgs(config.name, extraArgs);
+            validateCombinedArgs(config.name, config.args, extraArgs);
           } catch (err) {
             throw new ToolExecutionError(
               config.name,

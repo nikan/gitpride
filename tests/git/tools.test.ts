@@ -14,6 +14,7 @@ import { execSync } from 'node:child_process';
 
 import { buildToolDefinition, buildTools } from '../../src/git/tools.js';
 import { type CommandConfig } from '../../src/config/types.js';
+import { z } from 'zod';
 
 // Suppress logger output during tests
 vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
@@ -329,6 +330,45 @@ describe('buildToolDefinition', () => {
       // Try to inject a shell operator via string arg
       await expect(tool.handler({ ref: '; rm -rf /' })).rejects.toThrow(/shell operator/);
     });
+
+    it('should reject destructive sequences spanning base and extra args', async () => {
+      // Base args contain 'tag', user supplies '--delete' via extra arg
+      const tagConfig: CommandConfig = {
+        name: 'git_tag',
+        description: 'List tags',
+        command: 'git',
+        args: ['tag'],
+        allowExtraArgs: true,
+        extraArgsSchema: {
+          type: 'object',
+          properties: {
+            flag: { type: 'string', description: 'flag' },
+          },
+        },
+      };
+
+      const tool = buildToolDefinition(tagConfig, { cwd: tempDir });
+      await expect(tool.handler({ flag: '--delete' })).rejects.toThrow(/destructive sequence/);
+    });
+
+    it('should reject branch --delete spanning base and extra args', async () => {
+      const branchDeleteConfig: CommandConfig = {
+        name: 'git_branch_del',
+        description: 'Should fail',
+        command: 'git',
+        args: ['branch'],
+        allowExtraArgs: true,
+        extraArgsSchema: {
+          type: 'object',
+          properties: {
+            flag: { type: 'string', description: 'flag' },
+          },
+        },
+      };
+
+      const tool = buildToolDefinition(branchDeleteConfig, { cwd: tempDir });
+      await expect(tool.handler({ flag: '-D' })).rejects.toThrow(/destructive sequence/);
+    });
   });
 });
 
@@ -342,5 +382,122 @@ describe('buildTools', () => {
   it('should return empty array for empty config', () => {
     const tools = buildTools([]);
     expect(tools).toHaveLength(0);
+  });
+});
+
+describe('enum enforcement in input schemas', () => {
+  it('should restrict string properties to enum values', () => {
+    const config: CommandConfig = {
+      name: 'git_log_enum',
+      description: 'Log with enum format',
+      command: 'git',
+      args: ['log'],
+      allowExtraArgs: true,
+      extraArgsSchema: {
+        type: 'object',
+        properties: {
+          format: {
+            type: 'string',
+            description: 'Output format',
+            enum: ['oneline', 'short', 'full'],
+          },
+        },
+      },
+    };
+
+    const tool = buildToolDefinition(config);
+    const schema = z.object(tool.inputSchema);
+
+    // Valid values should pass
+    expect(() => schema.parse({ format: 'oneline' })).not.toThrow();
+    expect(() => schema.parse({ format: 'short' })).not.toThrow();
+    expect(() => schema.parse({ format: 'full' })).not.toThrow();
+
+    // Invalid value should fail
+    expect(() => schema.parse({ format: 'evil-format' })).toThrow();
+  });
+
+  it('should restrict number properties to enum values', () => {
+    const config: CommandConfig = {
+      name: 'git_log_limit',
+      description: 'Log with enum limit',
+      command: 'git',
+      args: ['log'],
+      allowExtraArgs: true,
+      extraArgsSchema: {
+        type: 'object',
+        properties: {
+          limit: {
+            type: 'number',
+            description: 'Number of commits',
+            enum: [5, 10, 25, 50],
+          },
+        },
+      },
+    };
+
+    const tool = buildToolDefinition(config);
+    const schema = z.object(tool.inputSchema);
+
+    // Valid values should pass
+    expect(() => schema.parse({ limit: 10 })).not.toThrow();
+    expect(() => schema.parse({ limit: 50 })).not.toThrow();
+
+    // Invalid value should fail
+    expect(() => schema.parse({ limit: 999 })).toThrow();
+  });
+
+  it('should allow unconstrained values when no enum is set', () => {
+    const config: CommandConfig = {
+      name: 'git_log_free',
+      description: 'Log without enum',
+      command: 'git',
+      args: ['log'],
+      allowExtraArgs: true,
+      extraArgsSchema: {
+        type: 'object',
+        properties: {
+          ref: {
+            type: 'string',
+            description: 'Any ref',
+          },
+        },
+      },
+    };
+
+    const tool = buildToolDefinition(config);
+    const schema = z.object(tool.inputSchema);
+
+    // Any string should be accepted
+    expect(() => schema.parse({ ref: 'anything-goes' })).not.toThrow();
+  });
+
+  it('should restrict boolean properties to enum values', () => {
+    const config: CommandConfig = {
+      name: 'git_diff_enum_bool',
+      description: 'Diff with enum boolean',
+      command: 'git',
+      args: ['diff'],
+      allowExtraArgs: true,
+      extraArgsSchema: {
+        type: 'object',
+        properties: {
+          staged: {
+            type: 'boolean',
+            description: 'Must be true',
+            enum: [true],
+          },
+        },
+      },
+    };
+
+    const tool = buildToolDefinition(config);
+    const schema = z.object(tool.inputSchema);
+
+    // Only true should pass
+    expect(() => schema.parse({ staged: true })).not.toThrow();
+
+    // false should fail
+    expect(() => schema.parse({ staged: false })).toThrow();
   });
 });
