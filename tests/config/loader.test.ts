@@ -260,3 +260,230 @@ describe('loadConfig', () => {
     expect(result.commands[0].extraArgsSchema).toBeDefined();
   });
 });
+
+describe('strict schema validation (issue #41)', () => {
+  it('should reject unknown properties at root level', () => {
+    const config = {
+      ...VALID_CONFIG,
+      unknownField: 'surprise',
+    };
+    expect(() => parseConfig(config)).toThrow(ConfigValidationError);
+  });
+
+  it('should reject unknown properties at command level', () => {
+    const config = {
+      commands: [
+        {
+          name: 'git_status',
+          description: 'Status',
+          command: 'git',
+          args: ['status'],
+          allowExtraArgs: false,
+          typoField: true,
+        },
+      ],
+    };
+    expect(() => parseConfig(config)).toThrow(ConfigValidationError);
+  });
+
+  it('should reject unknown properties in extraArgsSchema', () => {
+    const config = {
+      commands: [
+        {
+          name: 'git_log',
+          description: 'Log',
+          command: 'git',
+          args: ['log'],
+          allowExtraArgs: true,
+          extraArgsSchema: {
+            type: 'object',
+            properties: {
+              limit: { type: 'number', description: 'limit' },
+            },
+            badKey: 'should fail',
+          },
+        },
+      ],
+    };
+    expect(() => parseConfig(config)).toThrow(ConfigValidationError);
+  });
+
+  it('should reject unknown properties in extraArgsProperty', () => {
+    const config = {
+      commands: [
+        {
+          name: 'git_log',
+          description: 'Log',
+          command: 'git',
+          args: ['log'],
+          allowExtraArgs: true,
+          extraArgsSchema: {
+            type: 'object',
+            properties: {
+              limit: { type: 'number', description: 'limit', oops: true },
+            },
+          },
+        },
+      ],
+    };
+    expect(() => parseConfig(config)).toThrow(ConfigValidationError);
+  });
+});
+
+describe('allowExtraArgs consistency (issue #41)', () => {
+  it('should reject allowExtraArgs=true without extraArgsSchema', () => {
+    const config = {
+      commands: [
+        {
+          name: 'git_log',
+          description: 'Log',
+          command: 'git',
+          args: ['log'],
+          allowExtraArgs: true,
+        },
+      ],
+    };
+    expect(() => parseConfig(config)).toThrow(ConfigValidationError);
+  });
+
+  it('should reject allowExtraArgs=false with extraArgsSchema present', () => {
+    const config = {
+      commands: [
+        {
+          name: 'git_log',
+          description: 'Log',
+          command: 'git',
+          args: ['log'],
+          allowExtraArgs: false,
+          extraArgsSchema: {
+            type: 'object',
+            properties: {
+              limit: { type: 'number', description: 'limit' },
+            },
+          },
+        },
+      ],
+    };
+    expect(() => parseConfig(config)).toThrow(ConfigValidationError);
+  });
+
+  it('should accept allowExtraArgs=true with extraArgsSchema', () => {
+    expect(() => parseConfig(VALID_CONFIG_WITH_EXTRA_ARGS)).not.toThrow();
+  });
+
+  it('should accept allowExtraArgs=false without extraArgsSchema', () => {
+    expect(() => parseConfig(VALID_CONFIG)).not.toThrow();
+  });
+});
+
+describe('default-in-enum validation (issue #40)', () => {
+  it('should reject default value not in enum', () => {
+    const config = {
+      commands: [
+        {
+          name: 'git_log',
+          description: 'Log',
+          command: 'git',
+          args: ['log'],
+          allowExtraArgs: true,
+          extraArgsSchema: {
+            type: 'object',
+            properties: {
+              format: {
+                type: 'string',
+                description: 'format',
+                enum: ['oneline', 'short', 'full'],
+                default: 'invalid',
+              },
+            },
+          },
+        },
+      ],
+    };
+    expect(() => parseConfig(config)).toThrow(ConfigValidationError);
+    try {
+      parseConfig(config);
+    } catch (err) {
+      expect((err as ConfigValidationError).issues).toEqual(
+        expect.arrayContaining([expect.stringContaining('not in enum')]),
+      );
+    }
+  });
+
+  it('should accept default value that is in enum', () => {
+    const config = {
+      commands: [
+        {
+          name: 'git_log',
+          description: 'Log',
+          command: 'git',
+          args: ['log'],
+          allowExtraArgs: true,
+          extraArgsSchema: {
+            type: 'object',
+            properties: {
+              format: {
+                type: 'string',
+                description: 'format',
+                enum: ['oneline', 'short', 'full'],
+                default: 'oneline',
+              },
+            },
+          },
+        },
+      ],
+    };
+    expect(() => parseConfig(config)).not.toThrow();
+  });
+
+  it('should accept enum without default', () => {
+    const config = {
+      commands: [
+        {
+          name: 'git_log',
+          description: 'Log',
+          command: 'git',
+          args: ['log'],
+          allowExtraArgs: true,
+          extraArgsSchema: {
+            type: 'object',
+            properties: {
+              format: {
+                type: 'string',
+                description: 'format',
+                enum: ['oneline', 'short'],
+              },
+            },
+          },
+        },
+      ],
+    };
+    expect(() => parseConfig(config)).not.toThrow();
+  });
+
+  it('should reject number default not in number enum', () => {
+    const config = {
+      commands: [
+        {
+          name: 'git_log',
+          description: 'Log',
+          command: 'git',
+          args: ['log'],
+          allowExtraArgs: true,
+          extraArgsSchema: {
+            type: 'object',
+            properties: {
+              limit: {
+                type: 'number',
+                description: 'limit',
+                enum: [5, 10, 25],
+                default: 99,
+              },
+            },
+          },
+        },
+      ],
+    };
+    expect(() => parseConfig(config)).toThrow(ConfigValidationError);
+  });
+});
