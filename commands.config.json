@@ -1,0 +1,107 @@
+{
+  "$schema": "./src/config/schema.json",
+  "commands": [
+    {
+      "name": "git_status",
+      "description": "Show the working tree status",
+      "command": "git",
+      "args": ["status"],
+      "allowExtraArgs": false
+    },
+    {
+      "name": "git_log",
+      "description": "Show commit logs",
+      "command": "git",
+      "args": ["log", "--oneline"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of commits to show",
+            "default": 20
+          }
+        }
+      }
+    },
+    {
+      "name": "git_diff",
+      "description": "Show changes between commits, commit and working tree, etc.",
+      "command": "git",
+      "args": ["diff"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Git ref to diff against (e.g. HEAD~1, branch name)"
+          },
+          "staged": {
+            "type": "boolean",
+            "description": "Show staged changes (--cached)",
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "git_branch",
+      "description": "List branches",
+      "command": "git",
+      "args": ["branch"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "boolean",
+            "description": "List both remote-tracking and local branches",
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "git_show",
+      "description": "Show a commit or object",
+      "command": "git",
+      "args": ["show"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Commit SHA or ref to show",
+            "default": "HEAD"
+          }
+        }
+      }
+    },
+    {
+      "name": "git_blame",
+      "description": "Show what revision and author last modified each line of a file",
+      "command": "git",
+      "args": ["blame"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "File path to blame"
+          }
+        }
+      }
+    },
+    {
+      "name": "git_remote",
+      "description": "Show remote repositories",
+      "command": "git",
+      "args": ["remote", "-v"],
+      "allowExtraArgs": false
+    }
+  ]
+}
