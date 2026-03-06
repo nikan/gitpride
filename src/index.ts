@@ -3,13 +3,75 @@
  * Exposes non-destructive git commands to AI assistants via the Model Context Protocol.
  */
 
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+
+import { Logger } from './server/logger.js';
+import { ToolRegistry } from './server/registry.js';
+
 export const SERVER_NAME = 'gitpride';
 export const SERVER_VERSION = '0.1.0';
 
-export async function main() {
-  // Server implementation will be added in Epic 2.
-  // eslint-disable-next-line no-console
-  console.error(`${SERVER_NAME} v${SERVER_VERSION} — server not yet implemented`);
+const log = new Logger('main');
+
+/** Create a configured McpServer instance and its tool registry. */
+export function createServer(): { server: McpServer; registry: ToolRegistry } {
+  const server = new McpServer(
+    { name: SERVER_NAME, version: SERVER_VERSION },
+    { capabilities: { tools: {} } },
+  );
+  const registry = new ToolRegistry(server);
+  return { server, registry };
+}
+
+/**
+ * Install signal handlers for SIGINT and SIGTERM that close the server
+ * and exit cleanly. Returns a cleanup function that removes the handlers.
+ */
+export function installShutdownHandlers(
+  server: McpServer,
+  exitFn: (code: number) => void = (code) => process.exit(code),
+): () => void {
+  let shuttingDown = false;
+
+  const shutdown = async (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    log.info(`Received ${signal}, shutting down…`);
+    try {
+      await server.close();
+      log.info('Server closed');
+    } catch (err) {
+      log.error('Error during shutdown', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+    exitFn(0);
+  };
+
+  const onSigint = () => void shutdown('SIGINT');
+  const onSigterm = () => void shutdown('SIGTERM');
+
+  process.on('SIGINT', onSigint);
+  process.on('SIGTERM', onSigterm);
+
+  return () => {
+    process.removeListener('SIGINT', onSigint);
+    process.removeListener('SIGTERM', onSigterm);
+  };
+}
+
+export async function main(): Promise<void> {
+  log.info(`Starting ${SERVER_NAME} v${SERVER_VERSION}`);
+
+  const { server } = createServer();
+
+  installShutdownHandlers(server);
+
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+
+  log.info('MCP server connected via stdio');
 }
 
 // Run only when executed directly (not imported)
@@ -17,5 +79,8 @@ const isDirectRun =
   import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('index.js');
 
 if (isDirectRun) {
-  main();
+  main().catch((err) => {
+    log.error('Fatal error', { error: err instanceof Error ? err.message : String(err) });
+    process.exit(1);
+  });
 }
