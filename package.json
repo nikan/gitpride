@@ -4,9 +4,18 @@
   "description": "A lightweight, configurable MCP server that exposes non-destructive git commands to AI assistants",
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "gitpride": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "commands.config.json",
+    "examples",
+    "docs",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -15,17 +24,32 @@
     "test:watch": "vitest",
     "lint": "eslint 'src/**/*.ts' 'tests/**/*.ts'",
     "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts' '*.json' '*.md'",
-    "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts' '*.json' '*.md'"
+    "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts' '*.json' '*.md'",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
     "git",
     "model-context-protocol",
     "ai",
-    "cli"
+    "cli",
+    "mcp-server",
+    "ai-tools",
+    "developer-tools"
   ],
   "author": "Nikos Anagnostou",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nikan/gitpride.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nikan/gitpride/issues"
+  },
+  "homepage": "https://github.com/nikan/gitpride#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "zod": "^4.3.6"

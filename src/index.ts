@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * GitPride — MCP server entry point.
  * Exposes non-destructive git commands to AI assistants via the Model Context Protocol.
