@@ -7,6 +7,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 import { loadConfig, ConfigLoadError, ConfigValidationError } from './config/index.js';
+import { type CommandConfig } from './config/types.js';
+import { buildTools } from './git/index.js';
 import { Logger } from './server/logger.js';
 import { ToolRegistry } from './server/registry.js';
 
@@ -67,8 +69,10 @@ export async function main(): Promise<void> {
 
   // Load command configuration (optional — server starts without config)
   const configPath = process.env.GITPRIDE_CONFIG;
+  let commands: CommandConfig[] = [];
   try {
     const config = await loadConfig(configPath);
+    commands = config.commands;
     log.info(`Loaded ${config.commands.length} command(s) from config`);
   } catch (err) {
     if (err instanceof ConfigLoadError && !configPath) {
@@ -84,7 +88,14 @@ export async function main(): Promise<void> {
     }
   }
 
-  const { server } = createServer();
+  const { server, registry } = createServer();
+
+  // Build and register git command tools from config
+  if (commands.length > 0) {
+    const tools = buildTools(commands);
+    registry.registerAll(tools);
+    log.info(`Registered ${tools.length} git tool(s)`);
+  }
 
   installShutdownHandlers(server);
 
