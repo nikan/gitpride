@@ -6,6 +6,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
+import { loadConfig, ConfigLoadError, ConfigValidationError } from './config/index.js';
 import { Logger } from './server/logger.js';
 import { ToolRegistry } from './server/registry.js';
 
@@ -63,6 +64,25 @@ export function installShutdownHandlers(
 
 export async function main(): Promise<void> {
   log.info(`Starting ${SERVER_NAME} v${SERVER_VERSION}`);
+
+  // Load command configuration (optional — server starts without config)
+  const configPath = process.env.GITPRIDE_CONFIG;
+  try {
+    const config = await loadConfig(configPath);
+    log.info(`Loaded ${config.commands.length} command(s) from config`);
+  } catch (err) {
+    if (err instanceof ConfigLoadError && !configPath) {
+      log.info('No config file found, starting with no commands');
+    } else if (err instanceof ConfigValidationError) {
+      log.error('Config validation failed', { issues: (err as ConfigValidationError).issues });
+      process.exit(1);
+    } else {
+      log.error('Failed to load config', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      process.exit(1);
+    }
+  }
 
   const { server } = createServer();
 

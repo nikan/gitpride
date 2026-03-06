@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/nikan/gitpride/blob/main/src/config/schema.json",
+  "title": "GitPride Command Configuration",
+  "description": "Defines which git commands are exposed as MCP tools by the gitpride server.",
+  "type": "object",
+  "required": ["commands"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path or URL to this schema file (for editor autocompletion)."
+    },
+    "commands": {
+      "type": "array",
+      "description": "List of git commands to expose as MCP tools.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/CommandConfig"
+      }
+    }
+  },
+  "definitions": {
+    "CommandConfig": {
+      "type": "object",
+      "required": ["name", "description", "command", "args", "allowExtraArgs"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Unique tool name exposed via MCP (e.g. 'git_status'). Must be lowercase alphanumeric with underscores."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable description shown to the AI assistant."
+        },
+        "command": {
+          "type": "string",
+          "const": "git",
+          "description": "The executable to run. Currently only 'git' is supported."
+        },
+        "args": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Base arguments always passed to the command."
+        },
+        "allowExtraArgs": {
+          "type": "boolean",
+          "description": "Whether the user may supply additional arguments beyond the base args."
+        },
+        "extraArgsSchema": {
+          "$ref": "#/definitions/ExtraArgsSchema",
+          "description": "Schema for extra arguments when allowExtraArgs is true."
+        }
+      }
+    },
+    "ExtraArgsSchema": {
+      "type": "object",
+      "required": ["type", "properties"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "object"
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ExtraArgsProperty"
+          }
+        }
+      }
+    },
+    "ExtraArgsProperty": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "default": {},
+        "enum": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}
