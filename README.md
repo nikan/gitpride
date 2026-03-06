@@ -41,4 +41,4 @@ gh auth login
 bash scripts/create-issues.sh
 ```
 
-> **Note:** The workflow/script is idempotent — the Epic label creation is skipped if it already exists. Running it twice will create duplicate issues, so run it only once.
+> **Note:** The workflow has an idempotency guard — it checks for existing Epic-labelled issues and skips creation if any are found. Run it only once to avoid duplicates.

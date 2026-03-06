@@ -47,7 +47,7 @@ add_sub_issue() {
     --method POST \
     -H "Accept: application/vnd.github+json" \
     "/repos/$REPO/issues/$parent_number/sub_issues" \
-    -f sub_issue_id="$child_number" \
+    -F sub_issue_id="$child_number" \
     --silent && echo "  Linked #$child_number as sub-issue of #$parent_number"
 }
 
@@ -70,7 +70,7 @@ Initialize the repository with a well-configured TypeScript/Node.js project that
 - [ ] Configure build scripts and npm run scripts
 - [ ] Add \`.gitignore\` and repository hygiene files
 
-See [PLAN.md](../blob/main/PLAN.md#epic-1--project-setup--infrastructure) for full details." \
+See [PLAN.md](https://github.com/nikan/gitpride/blob/main/PLAN.md#epic-1--project-setup--infrastructure) for full details." \
   "Epic")
 EPIC1_NUM=$(echo "$EPIC1_URL" | grep -oE '[0-9]+$')
 echo "  Created Epic 1 as issue #$EPIC1_NUM"
@@ -152,7 +152,7 @@ A working MCP server that AI clients (e.g. Claude Desktop) can connect to via st
 - [ ] Add structured error handling and logging
 - [ ] Implement graceful shutdown
 
-See [PLAN.md](../blob/main/PLAN.md#epic-2--mcp-server-core) for full details." \
+See [PLAN.md](https://github.com/nikan/gitpride/blob/main/PLAN.md#epic-2--mcp-server-core) for full details." \
   "Epic")
 EPIC2_NUM=$(echo "$EPIC2_URL" | grep -oE '[0-9]+$')
 echo "  Created Epic 2 as issue #$EPIC2_NUM"
@@ -225,7 +225,7 @@ Any git command can be exposed (or hidden) by editing \`commands.config.json\`. 
 - [ ] Add non-destructive command guard
 - [ ] Support per-command argument allow-listing
 
-See [PLAN.md](../blob/main/PLAN.md#epic-3--command-configuration-system) for full details." \
+See [PLAN.md](https://github.com/nikan/gitpride/blob/main/PLAN.md#epic-3--command-configuration-system) for full details." \
   "Epic")
 EPIC3_NUM=$(echo "$EPIC3_URL" | grep -oE '[0-9]+$')
 echo "  Created Epic 3 as issue #$EPIC3_NUM"
@@ -306,7 +306,7 @@ A default \`commands.config.json\` ships with all common read-only git commands 
 - [ ] Implement \`git blame\` tool
 - [ ] Implement \`git remote\` info tool
 
-See [PLAN.md](../blob/main/PLAN.md#epic-4--git-commands-implementation) for full details." \
+See [PLAN.md](https://github.com/nikan/gitpride/blob/main/PLAN.md#epic-4--git-commands-implementation) for full details." \
   "Epic")
 EPIC4_NUM=$(echo "$EPIC4_URL" | grep -oE '[0-9]+$')
 echo "  Created Epic 4 as issue #$EPIC4_NUM"
@@ -459,7 +459,7 @@ A developer can install the server with a single npm command, configure it in mi
 - [ ] Add example configuration files
 - [ ] Prepare package for npm distribution
 
-See [PLAN.md](../blob/main/PLAN.md#epic-5--documentation--distribution) for full details." \
+See [PLAN.md](https://github.com/nikan/gitpride/blob/main/PLAN.md#epic-5--documentation--distribution) for full details." \
   "Epic")
 EPIC5_NUM=$(echo "$EPIC5_URL" | grep -oE '[0-9]+$')
 echo "  Created Epic 5 as issue #$EPIC5_NUM"
