@@ -1,0 +1,29 @@
+{
+  "$schema": "../src/config/schema.json",
+  "commands": [
+    {
+      "name": "git_status",
+      "description": "Show the working tree status",
+      "command": "git",
+      "args": ["status"],
+      "allowExtraArgs": false
+    },
+    {
+      "name": "git_log",
+      "description": "Show commit logs",
+      "command": "git",
+      "args": ["log", "--oneline"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of commits to show",
+            "default": 10
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "../src/config/schema.json",
+  "commands": [
+    {
+      "name": "git_log",
+      "description": "Show commit history",
+      "command": "git",
+      "args": ["log", "--oneline", "--graph"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of commits to show",
+            "default": 50
+          }
+        }
+      }
+    },
+    {
+      "name": "git_show",
+      "description": "Show a commit or object in detail",
+      "command": "git",
+      "args": ["show"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Commit SHA or ref to show",
+            "default": "HEAD"
+          }
+        }
+      }
+    },
+    {
+      "name": "git_blame",
+      "description": "Show what revision and author last modified each line of a file",
+      "command": "git",
+      "args": ["blame"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "File path to blame"
+          }
+        }
+      }
+    },
+    {
+      "name": "git_branch",
+      "description": "List all branches including remotes",
+      "command": "git",
+      "args": ["branch"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "boolean",
+            "description": "Include remote-tracking branches",
+            "default": true
+          }
+        }
+      }
+    },
+    {
+      "name": "git_remote",
+      "description": "Show remote repositories",
+      "command": "git",
+      "args": ["remote", "-v"],
+      "allowExtraArgs": false
+    }
+  ]
+}

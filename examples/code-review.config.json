@@ -1,0 +1,93 @@
+{
+  "$schema": "../src/config/schema.json",
+  "commands": [
+    {
+      "name": "git_diff",
+      "description": "Show changes between commits, commit and working tree, etc.",
+      "command": "git",
+      "args": ["diff"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Git ref to diff against (e.g. HEAD~1, main)"
+          },
+          "staged": {
+            "type": "boolean",
+            "description": "Show staged changes (--cached)",
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "git_log",
+      "description": "Show recent commit logs for review",
+      "command": "git",
+      "args": ["log", "--oneline", "--no-merges"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of commits to show",
+            "default": 10
+          }
+        }
+      }
+    },
+    {
+      "name": "git_show",
+      "description": "Show a commit's full diff and message",
+      "command": "git",
+      "args": ["show"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Commit SHA or ref to inspect",
+            "default": "HEAD"
+          }
+        }
+      }
+    },
+    {
+      "name": "git_blame",
+      "description": "Show what revision and author last modified each line of a file",
+      "command": "git",
+      "args": ["blame"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "File path to blame"
+          }
+        }
+      }
+    },
+    {
+      "name": "git_branch",
+      "description": "List branches",
+      "command": "git",
+      "args": ["branch"],
+      "allowExtraArgs": true,
+      "extraArgsSchema": {
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "boolean",
+            "description": "Include remote-tracking branches",
+            "default": false
+          }
+        }
+      }
+    }
+  ]
+}
