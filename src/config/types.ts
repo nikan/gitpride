@@ -35,8 +35,47 @@ export interface CommandConfig {
   extraArgsSchema?: ExtraArgsSchema;
 }
 
+/**
+ * Valid values for the `allowedOperations` config field.
+ *
+ * Each value unblocks a specific git operation that is otherwise forbidden
+ * by the non-destructive guard:
+ *
+ * - `"merge"`          — allows `git merge`
+ * - `"rebase"`         — allows `git rebase`
+ * - `"checkout"`       — allows `git checkout`
+ * - `"switch"`         — allows `git switch`
+ * - `"branch:delete"`  — allows `branch -d / -D / --delete`
+ */
+export type AllowedOperation = 'merge' | 'rebase' | 'checkout' | 'switch' | 'branch:delete';
+
 /** Root shape of `commands.config.json`. */
 export interface CommandsConfig {
   $schema?: string;
   commands: CommandConfig[];
+  /**
+   * Operations that are normally blocked by the non-destructive guard but
+   * should be permitted in this configuration.  Each entry must be one of
+   * the recognised operation identifiers (see {@link AllowedOperation}).
+   */
+  allowedOperations?: AllowedOperation[];
+  /**
+   * Branch names that must never be the target of a `branch -d / -D / --delete`
+   * operation.  Requires `"branch:delete"` in `allowedOperations` to be useful.
+   * Common values: `["main", "master", "develop"]`.
+   */
+  protectedBranches?: string[];
+}
+
+/**
+ * Options forwarded to the non-destructive guard so it can respect
+ * per-config allowlists and protected-branch rules.
+ */
+export interface GuardOptions {
+  /** Subcommands that may bypass the blocked-subcommands check. */
+  allowedSubcommands?: ReadonlySet<string>;
+  /** Arg sequences that may bypass the blocked-sequences check. */
+  allowedSequences?: readonly [string, string][];
+  /** Branch names that must never be deleted. */
+  protectedBranches?: readonly string[];
 }
