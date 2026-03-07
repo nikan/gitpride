@@ -8,6 +8,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
+import { fileURLToPath } from 'node:url';
+import { realpathSync } from 'node:fs';
+
 import {
   loadConfig,
   buildGuardOptions,
@@ -114,9 +117,22 @@ export async function main(): Promise<void> {
   log.info('MCP server connected via stdio');
 }
 
-// Run only when executed directly (not imported)
-const isDirectRun =
-  import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('index.js');
+// Run only when executed directly (not imported).
+// Resolve symlinks so `npx gitpride` (which goes through a bin symlink) is detected correctly.
+const isDirectRun = (() => {
+  try {
+    const thisFile = fileURLToPath(import.meta.url);
+    const runFile = realpathSync(process.argv[1]);
+    return thisFile === runFile;
+  } catch {
+    // Fallback: unresolved path comparison
+    return (
+      import.meta.url === `file://${process.argv[1]}` ||
+      process.argv[1]?.endsWith('index.js') ||
+      false
+    );
+  }
+})();
 
 if (isDirectRun) {
   main().catch((err) => {
