@@ -25,3 +25,4 @@ npm-debug.log*
 
 # TypeScript incremental build
 *.tsbuildinfo
+vscode-extension/gitpride-vscode-0.1.0.vsix
