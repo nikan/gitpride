@@ -281,6 +281,35 @@ GitPride enforces a strict **non-destructive guard** that blocks:
 
 Validation runs both at config load time and at runtime before each command execution. Additionally, each command has a **30-second timeout** and a **1 MB output cap**.
 
+## VS Code Extension
+
+The **GitPride VS Code extension** provides an integrated experience for configuring and managing the gitpride MCP server directly from your editor.
+
+### Quick Start
+
+1. Install the extension from the VS Code Marketplace (search for **"GitPride"**)
+2. Open a git repository in VS Code
+3. Run `GitPride: Bootstrap MCP Configuration` from the Command Palette (`Ctrl+Shift+P`)
+4. Run `GitPride: Start Server` to launch the MCP server
+
+### Features
+
+- **One-command setup** — Bootstrap `.vscode/mcp.json` and `commands.config.json`
+- **Server lifecycle** — Start, stop, and restart from the Command Palette
+- **Diagnostics** — Environment checks with actionable remediation steps
+- **Configurable** — Settings for config path, startup mode, and server command
+
+📖 **[Full VS Code Extension Guide](./docs/vscode-extension-guide.md)**
+
+### Extension Development
+
+```bash
+cd vscode-extension
+npm install
+npm run build
+# Press F5 in VS Code to launch Extension Development Host
+```
+
 ## Development
 
 ```bash
