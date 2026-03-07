@@ -37,12 +37,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Unit tests for configBootstrap module.
  *
  * These tests exercise the pure-logic functions without requiring the
- * VS Code API — we mock vscode, fs, and path as needed.
+ * VS Code API — we mock vscode and fs as needed.
  */
 const vitest_1 = require("vitest");
-const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
-// Mock vscode module
+// Track fs mock state per test
+let fsState;
+vitest_1.vi.mock('fs', () => ({
+    existsSync: vitest_1.vi.fn((...args) => fsState.existsSync(String(args[0]))),
+    readFileSync: vitest_1.vi.fn((...args) => fsState.readFileSync(String(args[0]))),
+    writeFileSync: vitest_1.vi.fn((...args) => fsState.writeFileSync(...args)),
+    mkdirSync: vitest_1.vi.fn((...args) => fsState.mkdirSync(...args)),
+}));
 vitest_1.vi.mock('vscode', () => ({
     workspace: {
         workspaceFolders: [
@@ -62,10 +68,10 @@ vitest_1.vi.mock('vscode', () => ({
         openTextDocument: vitest_1.vi.fn(() => Promise.resolve({})),
     },
     window: {
-        showInformationMessage: vitest_1.vi.fn(),
-        showWarningMessage: vitest_1.vi.fn(),
-        showErrorMessage: vitest_1.vi.fn(),
-        showTextDocument: vitest_1.vi.fn(),
+        showInformationMessage: vitest_1.vi.fn(() => Promise.resolve(undefined)),
+        showWarningMessage: vitest_1.vi.fn(() => Promise.resolve(undefined)),
+        showErrorMessage: vitest_1.vi.fn(() => Promise.resolve(undefined)),
+        showTextDocument: vitest_1.vi.fn(() => Promise.resolve()),
         createOutputChannel: vitest_1.vi.fn(() => ({
             appendLine: vitest_1.vi.fn(),
             show: vitest_1.vi.fn(),
@@ -77,6 +83,7 @@ vitest_1.vi.mock('vscode', () => ({
     },
 }));
 const configBootstrap_1 = require("../../src/configBootstrap");
+const fs = __importStar(require("fs"));
 (0, vitest_1.describe)('resolveConfigPath', () => {
     (0, vitest_1.it)('returns empty string when no explicit path is set', () => {
         const config = {
@@ -113,36 +120,22 @@ const configBootstrap_1 = require("../../src/configBootstrap");
 (0, vitest_1.describe)('bootstrapMcpConfig', () => {
     let mockOutputChannel;
     (0, vitest_1.beforeEach)(() => {
-        mockOutputChannel = {
-            appendLine: vitest_1.vi.fn(),
-            show: vitest_1.vi.fn(),
+        mockOutputChannel = { appendLine: vitest_1.vi.fn(), show: vitest_1.vi.fn() };
+        vitest_1.vi.clearAllMocks();
+        fsState = {
+            existsSync: () => false,
+            readFileSync: () => '{}',
+            writeFileSync: vitest_1.vi.fn(),
+            mkdirSync: vitest_1.vi.fn(),
         };
-        vitest_1.vi.spyOn(fs, 'existsSync');
-        vitest_1.vi.spyOn(fs, 'mkdirSync');
-        vitest_1.vi.spyOn(fs, 'readFileSync');
-        vitest_1.vi.spyOn(fs, 'writeFileSync');
-    });
-    (0, vitest_1.afterEach)(() => {
-        vitest_1.vi.restoreAllMocks();
     });
     (0, vitest_1.it)('creates .vscode/mcp.json with gitpride entry when no file exists', async () => {
-        const { bootstrapMcpConfig } = await Promise.resolve().then(() => __importStar(require('../../src/configBootstrap')));
-        const vscode = await Promise.resolve().then(() => __importStar(require('vscode')));
-        vitest_1.vi.mocked(fs.existsSync).mockImplementation((p) => {
-            const filePath = typeof p === 'string' ? p : p.toString();
-            if (filePath.endsWith('.vscode'))
-                return false;
-            if (filePath.endsWith('mcp.json'))
-                return false;
-            return false;
-        });
-        vitest_1.vi.mocked(fs.mkdirSync).mockReturnValue(undefined);
-        vitest_1.vi.mocked(fs.writeFileSync).mockReturnValue(undefined);
-        await bootstrapMcpConfig(mockOutputChannel);
+        fsState.existsSync = () => false;
+        await (0, configBootstrap_1.bootstrapMcpConfig)(mockOutputChannel);
         (0, vitest_1.expect)(fs.writeFileSync).toHaveBeenCalled();
-        const writeCall = vitest_1.vi.mocked(fs.writeFileSync).mock.calls[0];
-        const writtenPath = writeCall[0];
-        const writtenContent = JSON.parse(writeCall[1]);
+        const calls = vitest_1.vi.mocked(fs.writeFileSync).mock.calls;
+        const writtenPath = calls[0][0];
+        const writtenContent = JSON.parse(calls[0][1]);
         (0, vitest_1.expect)(writtenPath).toContain('mcp.json');
         (0, vitest_1.expect)(writtenContent.servers).toBeDefined();
         (0, vitest_1.expect)(writtenContent.servers.gitpride).toBeDefined();
@@ -150,16 +143,12 @@ const configBootstrap_1 = require("../../src/configBootstrap");
         (0, vitest_1.expect)(writtenContent.servers.gitpride.args).toEqual(['gitpride']);
     });
     (0, vitest_1.it)('merges with existing mcp.json preserving other servers', async () => {
-        const { bootstrapMcpConfig } = await Promise.resolve().then(() => __importStar(require('../../src/configBootstrap')));
         const existingConfig = {
-            servers: {
-                'other-server': { command: 'other', args: [] },
-            },
+            servers: { 'other-server': { command: 'other', args: [] } },
         };
-        vitest_1.vi.mocked(fs.existsSync).mockReturnValue(true);
-        vitest_1.vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(existingConfig));
-        vitest_1.vi.mocked(fs.writeFileSync).mockReturnValue(undefined);
-        await bootstrapMcpConfig(mockOutputChannel);
+        fsState.existsSync = () => true;
+        fsState.readFileSync = () => JSON.stringify(existingConfig);
+        await (0, configBootstrap_1.bootstrapMcpConfig)(mockOutputChannel);
         (0, vitest_1.expect)(fs.writeFileSync).toHaveBeenCalled();
         const writtenContent = JSON.parse(vitest_1.vi.mocked(fs.writeFileSync).mock.calls[0][1]);
         (0, vitest_1.expect)(writtenContent.servers['other-server']).toBeDefined();
@@ -167,17 +156,14 @@ const configBootstrap_1 = require("../../src/configBootstrap");
     });
     (0, vitest_1.it)('shows error when no workspace folder is open', async () => {
         const vscode = await Promise.resolve().then(() => __importStar(require('vscode')));
-        // Temporarily clear workspace folders
         const original = vscode.workspace.workspaceFolders;
         Object.defineProperty(vscode.workspace, 'workspaceFolders', {
             value: undefined,
             writable: true,
             configurable: true,
         });
-        const { bootstrapMcpConfig } = await Promise.resolve().then(() => __importStar(require('../../src/configBootstrap')));
-        await bootstrapMcpConfig(mockOutputChannel);
+        await (0, configBootstrap_1.bootstrapMcpConfig)(mockOutputChannel);
         (0, vitest_1.expect)(vscode.window.showErrorMessage).toHaveBeenCalledWith(vitest_1.expect.stringContaining('No workspace folder'));
-        // Restore
         Object.defineProperty(vscode.workspace, 'workspaceFolders', {
             value: original,
             writable: true,
@@ -188,25 +174,22 @@ const configBootstrap_1 = require("../../src/configBootstrap");
 (0, vitest_1.describe)('createStarterConfig', () => {
     let mockOutputChannel;
     (0, vitest_1.beforeEach)(() => {
-        mockOutputChannel = {
-            appendLine: vitest_1.vi.fn(),
-            show: vitest_1.vi.fn(),
+        mockOutputChannel = { appendLine: vitest_1.vi.fn(), show: vitest_1.vi.fn() };
+        vitest_1.vi.clearAllMocks();
+        fsState = {
+            existsSync: () => false,
+            readFileSync: () => '{}',
+            writeFileSync: vitest_1.vi.fn(),
+            mkdirSync: vitest_1.vi.fn(),
         };
-        vitest_1.vi.spyOn(fs, 'existsSync');
-        vitest_1.vi.spyOn(fs, 'writeFileSync');
-    });
-    (0, vitest_1.afterEach)(() => {
-        vitest_1.vi.restoreAllMocks();
     });
     (0, vitest_1.it)('creates commands.config.json when file does not exist', async () => {
-        const { createStarterConfig } = await Promise.resolve().then(() => __importStar(require('../../src/configBootstrap')));
-        vitest_1.vi.mocked(fs.existsSync).mockReturnValue(false);
-        vitest_1.vi.mocked(fs.writeFileSync).mockReturnValue(undefined);
-        await createStarterConfig(mockOutputChannel);
+        fsState.existsSync = () => false;
+        await (0, configBootstrap_1.createStarterConfig)(mockOutputChannel);
         (0, vitest_1.expect)(fs.writeFileSync).toHaveBeenCalled();
-        const writeCall = vitest_1.vi.mocked(fs.writeFileSync).mock.calls[0];
-        const writtenPath = writeCall[0];
-        const writtenContent = JSON.parse(writeCall[1]);
+        const calls = vitest_1.vi.mocked(fs.writeFileSync).mock.calls;
+        const writtenPath = calls[0][0];
+        const writtenContent = JSON.parse(calls[0][1]);
         (0, vitest_1.expect)(writtenPath).toContain('commands.config.json');
         (0, vitest_1.expect)(writtenContent.commands).toBeDefined();
         (0, vitest_1.expect)(Array.isArray(writtenContent.commands)).toBe(true);

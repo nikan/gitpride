@@ -59,9 +59,9 @@ vitest_1.vi.mock('vscode', () => ({
         })),
     },
     window: {
-        showInformationMessage: vitest_1.vi.fn(),
-        showWarningMessage: vitest_1.vi.fn(),
-        showErrorMessage: vitest_1.vi.fn(),
+        showInformationMessage: vitest_1.vi.fn(() => Promise.resolve(undefined)),
+        showWarningMessage: vitest_1.vi.fn(() => Promise.resolve(undefined)),
+        showErrorMessage: vitest_1.vi.fn(() => Promise.resolve(undefined)),
         createOutputChannel: vitest_1.vi.fn(() => ({
             appendLine: vitest_1.vi.fn(),
             show: vitest_1.vi.fn(),
@@ -72,7 +72,6 @@ vitest_1.vi.mock('vscode', () => ({
         registerCommand: vitest_1.vi.fn(),
     },
 }));
-// Create mock process
 function createMockProcess() {
     const proc = new events_1.EventEmitter();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,7 +91,6 @@ vitest_1.vi.mock('child_process', () => ({
         return mockProcess;
     }),
 }));
-// Mock configBootstrap to avoid its vscode dependency issues
 vitest_1.vi.mock('../../src/configBootstrap', () => ({
     resolveConfigPath: vitest_1.vi.fn(() => ''),
 }));
@@ -137,8 +135,6 @@ const serverManager_1 = require("../../src/serverManager");
     });
     (0, vitest_1.it)('restart stops then starts', async () => {
         await manager.start();
-        const firstPid = manager.getInfo().pid;
-        // Simulate process exit on stop
         const exitPromise = manager.restart();
         mockProcess.emit('exit', 0, null);
         await exitPromise;
@@ -148,7 +144,6 @@ const serverManager_1 = require("../../src/serverManager");
     (0, vitest_1.it)('detects process crash and offers restart', async () => {
         const vscode = await Promise.resolve().then(() => __importStar(require('vscode')));
         await manager.start();
-        // Simulate unexpected crash
         mockProcess.emit('exit', 1, null);
         (0, vitest_1.expect)(vscode.window.showWarningMessage).toHaveBeenCalledWith(vitest_1.expect.stringContaining('exited unexpectedly'), 'Restart', 'Show Output');
     });

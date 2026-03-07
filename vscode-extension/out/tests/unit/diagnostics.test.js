@@ -37,7 +37,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Unit tests for diagnostics module.
  */
 const vitest_1 = require("vitest");
-const fs = __importStar(require("fs"));
+let fsExistsResult = false;
+vitest_1.vi.mock('fs', () => ({
+    existsSync: vitest_1.vi.fn(() => fsExistsResult),
+    readFileSync: vitest_1.vi.fn(() => '{}'),
+}));
 vitest_1.vi.mock('vscode', () => ({
     workspace: {
         workspaceFolders: [
@@ -56,9 +60,9 @@ vitest_1.vi.mock('vscode', () => ({
         })),
     },
     window: {
-        showInformationMessage: vitest_1.vi.fn(),
-        showWarningMessage: vitest_1.vi.fn(),
-        showErrorMessage: vitest_1.vi.fn(),
+        showInformationMessage: vitest_1.vi.fn(() => Promise.resolve(undefined)),
+        showWarningMessage: vitest_1.vi.fn(() => Promise.resolve(undefined)),
+        showErrorMessage: vitest_1.vi.fn(() => Promise.resolve(undefined)),
     },
 }));
 vitest_1.vi.mock('child_process', () => ({
@@ -72,9 +76,6 @@ vitest_1.vi.mock('child_process', () => ({
         return '';
     }),
     spawn: vitest_1.vi.fn(),
-}));
-vitest_1.vi.mock('../../src/serverManager', () => ({
-    ServerManager: vitest_1.vi.fn(),
 }));
 const diagnostics_1 = require("../../src/diagnostics");
 (0, vitest_1.describe)('showStatus', () => {
@@ -107,21 +108,14 @@ const diagnostics_1 = require("../../src/diagnostics");
 (0, vitest_1.describe)('showDiagnostics', () => {
     let outputChannel;
     (0, vitest_1.beforeEach)(() => {
-        outputChannel = {
-            appendLine: vitest_1.vi.fn(),
-            show: vitest_1.vi.fn(),
-        };
-        vitest_1.vi.spyOn(fs, 'existsSync');
-        vitest_1.vi.spyOn(fs, 'readFileSync');
-    });
-    (0, vitest_1.afterEach)(() => {
-        vitest_1.vi.restoreAllMocks();
+        outputChannel = { appendLine: vitest_1.vi.fn(), show: vitest_1.vi.fn() };
+        fsExistsResult = false;
+        vitest_1.vi.clearAllMocks();
     });
     (0, vitest_1.it)('runs diagnostics and outputs to channel', async () => {
         const manager = {
             getInfo: vitest_1.vi.fn(() => ({ state: 'stopped' })),
         };
-        vitest_1.vi.mocked(fs.existsSync).mockReturnValue(false);
         await (0, diagnostics_1.showDiagnostics)(manager, outputChannel);
         (0, vitest_1.expect)(outputChannel.appendLine).toHaveBeenCalled();
         (0, vitest_1.expect)(outputChannel.show).toHaveBeenCalled();
@@ -133,7 +127,6 @@ const diagnostics_1 = require("../../src/diagnostics");
         const manager = {
             getInfo: vitest_1.vi.fn(() => ({ state: 'stopped' })),
         };
-        vitest_1.vi.mocked(fs.existsSync).mockReturnValue(false);
         await (0, diagnostics_1.showDiagnostics)(manager, outputChannel);
         const output = vitest_1.vi.mocked(outputChannel.appendLine).mock.calls[0][0];
         (0, vitest_1.expect)(output).toContain('✅ Node.js: v20.11.0');
