@@ -117,12 +117,13 @@ For the complete field reference, property type mapping, and security rules, see
 
 Ready-to-use configurations are in the [`examples/`](./examples/) directory:
 
-| File                                                            | Use Case                           |
-| --------------------------------------------------------------- | ---------------------------------- |
-| [`minimal.config.json`](./examples/minimal.config.json)         | Bare minimum — status and log only |
-| [`full.config.json`](./examples/full.config.json)               | All 7 default commands             |
-| [`code-review.config.json`](./examples/code-review.config.json) | Diff, blame, and log for reviews   |
-| [`history.config.json`](./examples/history.config.json)         | Repository history exploration     |
+| File                                                                              | Use Case                                               |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [`minimal.config.json`](./examples/minimal.config.json)                           | Bare minimum — status and log only                     |
+| [`full.config.json`](./examples/full.config.json)                                 | All 7 default commands                                 |
+| [`code-review.config.json`](./examples/code-review.config.json)                   | Diff, blame, and log for reviews                       |
+| [`code-review-workflow.config.json`](./examples/code-review-workflow.config.json) | Full review workflow with merge, rebase, and branching |
+| [`history.config.json`](./examples/history.config.json)                           | Repository history exploration                         |
 
 ## Client Integration
 
@@ -180,6 +181,88 @@ Add to `.vscode/mcp.json` in your workspace:
   }
 }
 ```
+
+### Mistral Le Chat (Vibe)
+
+In [Le Chat](https://chat.mistral.ai/), open **Settings → Connectors → Add MCP Server** and configure:
+
+- **Name:** `gitpride`
+- **Command:** `npx`
+- **Arguments:** `-y gitpride`
+- **Environment Variables:** `GITPRIDE_CONFIG=./commands.config.json`
+
+Or add the following to your Le Chat MCP configuration file:
+
+```json
+{
+  "mcpServers": {
+    "gitpride": {
+      "command": "npx",
+      "args": ["-y", "gitpride"],
+      "env": {
+        "GITPRIDE_CONFIG": "/absolute/path/to/commands.config.json"
+      }
+    }
+  }
+}
+```
+
+### OpenAI Codex CLI
+
+Add to your [Codex CLI](https://github.com/openai/codex) configuration at `~/.codex/config.json`:
+
+```json
+{
+  "mcpServers": {
+    "gitpride": {
+      "command": "npx",
+      "args": ["-y", "gitpride"],
+      "env": {
+        "GITPRIDE_CONFIG": "/absolute/path/to/commands.config.json"
+      }
+    }
+  }
+}
+```
+
+## Reviewer Role
+
+GitPride can be configured to give your AI assistant a **code reviewer** role with access to the git commands reviewers need most — diff, blame, log, and show.
+
+### Quick setup
+
+Use one of the included review-focused configurations:
+
+```bash
+# Read-only review — diff, blame, log, show, branch
+cp node_modules/gitpride/examples/code-review.config.json commands.config.json
+
+# Full review workflow — adds merge, rebase, checkout, branch delete
+cp node_modules/gitpride/examples/code-review-workflow.config.json commands.config.json
+```
+
+### Configuration overview
+
+The **`code-review.config.json`** profile exposes only non-destructive commands so the AI can inspect code without making changes:
+
+| Tool         | Purpose                          |
+| ------------ | -------------------------------- |
+| `git_diff`   | Compare changes across refs      |
+| `git_log`    | Browse recent commits            |
+| `git_show`   | Inspect a specific commit        |
+| `git_blame`  | Identify who changed each line   |
+| `git_branch` | List branches                    |
+
+The **`code-review-workflow.config.json`** profile extends the above with controlled write operations (`merge`, `rebase`, `checkout`, `branch -d`) using `allowedOperations` and `protectedBranches` guards:
+
+```json
+{
+  "allowedOperations": ["merge", "rebase", "checkout", "switch", "branch:delete"],
+  "protectedBranches": ["main", "master", "develop", "release"]
+}
+```
+
+This lets the AI perform common review-cycle tasks (switch branches, merge feature branches) while protecting important branches from accidental deletion.
 
 ## Environment Variables
 
