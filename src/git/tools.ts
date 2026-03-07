@@ -20,6 +20,20 @@ import { runGit, type RunGitOptions } from './runner.js';
 
 const log = new Logger('git-tools');
 
+function literalSchemaFromValues<T extends string | number | boolean>(
+  values: readonly T[],
+): z.ZodTypeAny {
+  const literals = values.map((value) => z.literal(value));
+  const [first, second, ...rest] = literals;
+  if (!first) {
+    throw new Error('Expected at least one literal value');
+  }
+  if (!second) {
+    return first;
+  }
+  return z.union([first, second, ...rest]);
+}
+
 /**
  * Convert an ExtraArgsProperty from config into a Zod schema.
  */
@@ -37,18 +51,16 @@ function propertyToZod(prop: ExtraArgsProperty): z.ZodTypeAny {
       break;
     case 'number':
       if (prop.enum && prop.enum.length > 0) {
-        const literals = prop.enum.map((v) => z.literal(Number(v)));
-        schema = z.union(literals as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]])
-          .describe(prop.description ?? '');
+        const values = prop.enum.map((v) => Number(v));
+        schema = literalSchemaFromValues(values).describe(prop.description ?? '');
       } else {
         schema = z.number().describe(prop.description ?? '');
       }
       break;
     case 'boolean':
       if (prop.enum && prop.enum.length > 0) {
-        const literals = prop.enum.map((v) => z.literal(Boolean(v)));
-        schema = z.union(literals as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]])
-          .describe(prop.description ?? '');
+        const values = prop.enum.map((v) => Boolean(v));
+        schema = literalSchemaFromValues(values).describe(prop.description ?? '');
       } else {
         schema = z.boolean().describe(prop.description ?? '');
       }
