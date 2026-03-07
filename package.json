@@ -1,6 +1,6 @@
 {
   "name": "gitpride",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A lightweight, configurable MCP server that exposes non-destructive git commands to AI assistants",
   "type": "module",
   "main": "dist/index.js",

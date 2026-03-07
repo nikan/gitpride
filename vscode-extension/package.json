@@ -85,7 +85,7 @@
         },
         "gitpride.minimumVersion": {
           "type": "string",
-          "default": "0.1.0",
+          "default": "0.2.0",
           "description": "Minimum required gitpride version. The extension warns if the server version is below this."
         }
       }
