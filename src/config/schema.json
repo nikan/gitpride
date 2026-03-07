@@ -18,6 +18,22 @@
       "items": {
         "$ref": "#/definitions/CommandConfig"
       }
+    },
+    "allowedOperations": {
+      "type": "array",
+      "description": "Operations normally blocked by the non-destructive guard that this configuration explicitly permits.",
+      "items": {
+        "type": "string",
+        "enum": ["merge", "rebase", "checkout", "switch", "branch:delete"]
+      }
+    },
+    "protectedBranches": {
+      "type": "array",
+      "description": "Branch names that must never be the target of a delete operation. Requires 'branch:delete' in allowedOperations.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   },
   "definitions": {

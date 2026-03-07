@@ -10,7 +10,7 @@ import { resolve } from 'node:path';
 import { z } from 'zod';
 
 import { Logger } from '../server/logger.js';
-import { validateCommandArgs, DestructiveCommandError } from './guard.js';
+import { validateCommandArgs, buildGuardOptions, DestructiveCommandError } from './guard.js';
 import { type CommandsConfig, type CommandConfig } from './types.js';
 
 const log = new Logger('config');
@@ -20,17 +20,21 @@ export const DEFAULT_CONFIG_FILENAME = 'commands.config.json';
 
 // ── Zod schemas ────────────────────────────────────────────────────
 
-const ExtraArgsPropertySchema = z.object({
-  type: z.enum(['string', 'number', 'boolean']),
-  description: z.string().optional(),
-  default: z.union([z.string(), z.number(), z.boolean()]).optional(),
-  enum: z.array(z.union([z.string(), z.number(), z.boolean()])).optional(),
-}).strict();
+const ExtraArgsPropertySchema = z
+  .object({
+    type: z.enum(['string', 'number', 'boolean']),
+    description: z.string().optional(),
+    default: z.union([z.string(), z.number(), z.boolean()]).optional(),
+    enum: z.array(z.union([z.string(), z.number(), z.boolean()])).optional(),
+  })
+  .strict();
 
-const ExtraArgsSchemaSchema = z.object({
-  type: z.literal('object'),
-  properties: z.record(z.string(), ExtraArgsPropertySchema),
-}).strict();
+const ExtraArgsSchemaSchema = z
+  .object({
+    type: z.literal('object'),
+    properties: z.record(z.string(), ExtraArgsPropertySchema),
+  })
+  .strict();
 
 const CommandConfigSchema = z
   .object({
@@ -58,10 +62,16 @@ const CommandConfigSchema = z
     },
   );
 
-const CommandsConfigSchema = z.object({
-  $schema: z.string().optional(),
-  commands: z.array(CommandConfigSchema).min(1, 'at least one command must be defined'),
-}).strict();
+const AllowedOperationSchema = z.enum(['merge', 'rebase', 'checkout', 'switch', 'branch:delete']);
+
+const CommandsConfigSchema = z
+  .object({
+    $schema: z.string().optional(),
+    commands: z.array(CommandConfigSchema).min(1, 'at least one command must be defined'),
+    allowedOperations: z.array(AllowedOperationSchema).optional(),
+    protectedBranches: z.array(z.string().min(1)).optional(),
+  })
+  .strict();
 
 // ── Error types ────────────────────────────────────────────────────
 
@@ -102,12 +112,13 @@ function validateUniqueNames(commands: CommandConfig[]): string[] {
   return errors;
 }
 
-/** Run the non-destructive guard on every command. */
-function validateGuard(commands: CommandConfig[]): string[] {
+/** Run the non-destructive guard on every command, respecting allowlists. */
+function validateGuard(commands: CommandConfig[], config: CommandsConfig): string[] {
+  const guardOpts = buildGuardOptions(config.allowedOperations, config.protectedBranches);
   const errors: string[] = [];
   for (const cmd of commands) {
     try {
-      validateCommandArgs(cmd);
+      validateCommandArgs(cmd, guardOpts);
     } catch (err) {
       if (err instanceof DestructiveCommandError) {
         errors.push(err.message);
@@ -129,8 +140,8 @@ function validateDefaultInEnum(commands: CommandConfig[]): string[] {
         if (!prop.enum.includes(prop.default)) {
           errors.push(
             `Command "${cmd.name}": property "${key}" has default ` +
-            `value ${JSON.stringify(prop.default)} which is not in enum ` +
-            `[${prop.enum.map((v) => JSON.stringify(v)).join(', ')}]`,
+              `value ${JSON.stringify(prop.default)} which is not in enum ` +
+              `[${prop.enum.map((v) => JSON.stringify(v)).join(', ')}]`,
           );
         }
       }
@@ -149,9 +160,7 @@ export function parseConfig(raw: unknown): CommandsConfig {
   const result = CommandsConfigSchema.safeParse(raw);
 
   if (!result.success) {
-    const issues = result.error.issues.map(
-      (i) => `${i.path.join('.')}: ${i.message}`,
-    );
+    const issues = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`);
     throw new ConfigValidationError('Invalid configuration schema', issues);
   }
 
@@ -160,7 +169,7 @@ export function parseConfig(raw: unknown): CommandsConfig {
   // Semantic validations
   const errors: string[] = [
     ...validateUniqueNames(config.commands),
-    ...validateGuard(config.commands),
+    ...validateGuard(config.commands, config),
     ...validateDefaultInEnum(config.commands),
   ];
 
@@ -186,20 +195,14 @@ export async function loadConfig(configPath?: string): Promise<CommandsConfig> {
   try {
     raw = await readFile(filePath, 'utf-8');
   } catch (err) {
-    throw new ConfigLoadError(
-      `Failed to read config file: ${filePath}`,
-      err,
-    );
+    throw new ConfigLoadError(`Failed to read config file: ${filePath}`, err);
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch (err) {
-    throw new ConfigLoadError(
-      `Failed to parse config file as JSON: ${filePath}`,
-      err,
-    );
+    throw new ConfigLoadError(`Failed to parse config file as JSON: ${filePath}`, err);
   }
 
   return parseConfig(parsed);

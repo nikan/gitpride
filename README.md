@@ -60,15 +60,15 @@ GITPRIDE_CONFIG=./my-config.json gitpride
 
 The included [`commands.config.json`](./commands.config.json) exposes these tools:
 
-| Tool          | Git Command     | Extra Args                |
-| ------------- | --------------- | ------------------------- |
-| `git_status`  | `git status`    | —                         |
-| `git_log`     | `git log`       | `limit` (number)          |
-| `git_diff`    | `git diff`      | `ref` (string), `staged` (boolean) |
-| `git_branch`  | `git branch`    | `all` (boolean)           |
-| `git_show`    | `git show`      | `ref` (string)            |
-| `git_blame`   | `git blame`     | `file` (string)           |
-| `git_remote`  | `git remote -v` | —                         |
+| Tool         | Git Command     | Extra Args                         |
+| ------------ | --------------- | ---------------------------------- |
+| `git_status` | `git status`    | —                                  |
+| `git_log`    | `git log`       | `limit` (number)                   |
+| `git_diff`   | `git diff`      | `ref` (string), `staged` (boolean) |
+| `git_branch` | `git branch`    | `all` (boolean)                    |
+| `git_show`   | `git show`      | `ref` (string)                     |
+| `git_blame`  | `git blame`     | `file` (string)                    |
+| `git_remote` | `git remote -v` | —                                  |
 
 ## Configuration
 
@@ -117,12 +117,12 @@ For the complete field reference, property type mapping, and security rules, see
 
 Ready-to-use configurations are in the [`examples/`](./examples/) directory:
 
-| File | Use Case |
-| ---- | -------- |
-| [`minimal.config.json`](./examples/minimal.config.json) | Bare minimum — status and log only |
-| [`full.config.json`](./examples/full.config.json) | All 7 default commands |
-| [`code-review.config.json`](./examples/code-review.config.json) | Diff, blame, and log for reviews |
-| [`history.config.json`](./examples/history.config.json) | Repository history exploration |
+| File                                                            | Use Case                           |
+| --------------------------------------------------------------- | ---------------------------------- |
+| [`minimal.config.json`](./examples/minimal.config.json)         | Bare minimum — status and log only |
+| [`full.config.json`](./examples/full.config.json)               | All 7 default commands             |
+| [`code-review.config.json`](./examples/code-review.config.json) | Diff, blame, and log for reviews   |
+| [`history.config.json`](./examples/history.config.json)         | Repository history exploration     |
 
 ## Client Integration
 
@@ -183,10 +183,10 @@ Add to `.vscode/mcp.json` in your workspace:
 
 ## Environment Variables
 
-| Variable          | Description                              | Default                        |
-| ----------------- | ---------------------------------------- | ------------------------------ |
-| `GITPRIDE_CONFIG` | Path to the command configuration file   | `./commands.config.json`       |
-| `LOG_LEVEL`       | Log verbosity: `debug`, `info`, `warn`, `error` | `info`                 |
+| Variable          | Description                                     | Default                  |
+| ----------------- | ----------------------------------------------- | ------------------------ |
+| `GITPRIDE_CONFIG` | Path to the command configuration file          | `./commands.config.json` |
+| `LOG_LEVEL`       | Log verbosity: `debug`, `info`, `warn`, `error` | `info`                   |
 
 ## Security
 

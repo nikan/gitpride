@@ -39,39 +39,35 @@ describe('validateCommandArgs', () => {
   });
 
   it('should block "tag --delete" sequence', () => {
-    expect(() =>
-      validateCommandArgs(makeCommand({ args: ['tag', '--delete'] })),
-    ).toThrow(DestructiveCommandError);
+    expect(() => validateCommandArgs(makeCommand({ args: ['tag', '--delete'] }))).toThrow(
+      DestructiveCommandError,
+    );
   });
 
   it('should block "tag -d" sequence', () => {
-    expect(() =>
-      validateCommandArgs(makeCommand({ args: ['tag', '-d'] })),
-    ).toThrow(DestructiveCommandError);
+    expect(() => validateCommandArgs(makeCommand({ args: ['tag', '-d'] }))).toThrow(
+      DestructiveCommandError,
+    );
   });
 
   it('should block "branch -D" sequence', () => {
-    expect(() =>
-      validateCommandArgs(makeCommand({ args: ['branch', '-D'] })),
-    ).toThrow(DestructiveCommandError);
+    expect(() => validateCommandArgs(makeCommand({ args: ['branch', '-D'] }))).toThrow(
+      DestructiveCommandError,
+    );
   });
 
   it('should block "branch --delete" sequence', () => {
-    expect(() =>
-      validateCommandArgs(makeCommand({ args: ['branch', '--delete'] })),
-    ).toThrow(DestructiveCommandError);
+    expect(() => validateCommandArgs(makeCommand({ args: ['branch', '--delete'] }))).toThrow(
+      DestructiveCommandError,
+    );
   });
 
   it('should allow "branch" without -D', () => {
-    expect(() =>
-      validateCommandArgs(makeCommand({ args: ['branch', '-a'] })),
-    ).not.toThrow();
+    expect(() => validateCommandArgs(makeCommand({ args: ['branch', '-a'] }))).not.toThrow();
   });
 
   it('should allow "tag" without --delete', () => {
-    expect(() =>
-      validateCommandArgs(makeCommand({ args: ['tag', '-l'] })),
-    ).not.toThrow();
+    expect(() => validateCommandArgs(makeCommand({ args: ['tag', '-l'] }))).not.toThrow();
   });
 
   it('should block shell operators as exact tokens', () => {
@@ -84,9 +80,9 @@ describe('validateCommandArgs', () => {
   });
 
   it('should block embedded shell operators', () => {
-    expect(() =>
-      validateCommandArgs(makeCommand({ args: ['log;rm', '-rf'] })),
-    ).toThrow(DestructiveCommandError);
+    expect(() => validateCommandArgs(makeCommand({ args: ['log;rm', '-rf'] }))).toThrow(
+      DestructiveCommandError,
+    );
   });
 
   it('should include the command name in the error message', () => {
@@ -101,9 +97,7 @@ describe('validateCommandArgs', () => {
   });
 
   it('should accept commands with flags before the subcommand', () => {
-    expect(() =>
-      validateCommandArgs(makeCommand({ args: ['-C', '/tmp', 'log'] })),
-    ).not.toThrow();
+    expect(() => validateCommandArgs(makeCommand({ args: ['-C', '/tmp', 'log'] }))).not.toThrow();
   });
 });
 
@@ -123,9 +117,7 @@ describe('validateExtraArgs', () => {
   });
 
   it('should block redirect operators in extra args', () => {
-    expect(() => validateExtraArgs('git_log', ['>', '/tmp/out'])).toThrow(
-      DestructiveCommandError,
-    );
+    expect(() => validateExtraArgs('git_log', ['>', '/tmp/out'])).toThrow(DestructiveCommandError);
   });
 });
 
@@ -256,9 +248,7 @@ describe('newly blocked arg sequences (issue #39)', () => {
 
   it('should include all expected sequences in BLOCKED_ARG_SEQUENCES', () => {
     for (const [first, second] of newSequences) {
-      const found = BLOCKED_ARG_SEQUENCES.some(
-        ([f, s]) => f === first && s === second,
-      );
+      const found = BLOCKED_ARG_SEQUENCES.some(([f, s]) => f === first && s === second);
       expect(found, `expected [${first}, ${second}] in BLOCKED_ARG_SEQUENCES`).toBe(true);
     }
   });

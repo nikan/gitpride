@@ -15,7 +15,12 @@ import { type ToolDefinition } from '../server/registry.js';
 import { ToolExecutionError } from '../server/errors.js';
 import { Logger } from '../server/logger.js';
 import { validateExtraArgs, validateCombinedArgs } from '../config/guard.js';
-import { type CommandConfig, type ExtraArgsSchema, type ExtraArgsProperty } from '../config/types.js';
+import {
+  type CommandConfig,
+  type ExtraArgsSchema,
+  type ExtraArgsProperty,
+  type GuardOptions,
+} from '../config/types.js';
 import { runGit, type RunGitOptions } from './runner.js';
 
 const log = new Logger('git-tools');
@@ -100,10 +105,7 @@ function buildInputSchema(extraArgsSchema?: ExtraArgsSchema): Record<string, z.Z
  * - boolean true → adds the flag name as --key (or specific mapped flag)
  * - string/number → adds as positional or --key value
  */
-function buildExtraCliArgs(
-  config: CommandConfig,
-  inputArgs: Record<string, unknown>,
-): string[] {
+function buildExtraCliArgs(config: CommandConfig, inputArgs: Record<string, unknown>): string[] {
   const extra: string[] = [];
 
   if (!config.extraArgsSchema) return extra;
@@ -153,10 +155,9 @@ function buildExtraCliArgs(
 export function buildToolDefinition(
   config: CommandConfig,
   gitOptions?: RunGitOptions,
+  guardOptions?: GuardOptions,
 ): ToolDefinition {
-  const inputSchema = buildInputSchema(
-    config.allowExtraArgs ? config.extraArgsSchema : undefined,
-  );
+  const inputSchema = buildInputSchema(config.allowExtraArgs ? config.extraArgsSchema : undefined);
 
   return {
     name: config.name,
@@ -174,8 +175,8 @@ export function buildToolDefinition(
         // Validate extra args individually and combined with base args
         if (extraArgs.length > 0) {
           try {
-            validateExtraArgs(config.name, extraArgs);
-            validateCombinedArgs(config.name, config.args, extraArgs);
+            validateExtraArgs(config.name, extraArgs, guardOptions);
+            validateCombinedArgs(config.name, config.args, extraArgs, guardOptions);
           } catch (err) {
             throw new ToolExecutionError(
               config.name,
@@ -213,7 +214,8 @@ export function buildToolDefinition(
 export function buildTools(
   commands: readonly CommandConfig[],
   gitOptions?: RunGitOptions,
+  guardOptions?: GuardOptions,
 ): ToolDefinition[] {
   log.info(`Building ${commands.length} tool(s) from config`);
-  return commands.map((cmd) => buildToolDefinition(cmd, gitOptions));
+  return commands.map((cmd) => buildToolDefinition(cmd, gitOptions, guardOptions));
 }

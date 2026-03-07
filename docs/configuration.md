@@ -16,14 +16,18 @@ If no config file is found and `GITPRIDE_CONFIG` is not set, the server starts w
 ```json
 {
   "$schema": "./src/config/schema.json",
+  "allowedOperations": ["merge", "rebase", "checkout", "switch", "branch:delete"],
+  "protectedBranches": ["main", "master", "develop"],
   "commands": [...]
 }
 ```
 
-| Field      | Type   | Required | Description                                              |
-| ---------- | ------ | -------- | -------------------------------------------------------- |
-| `$schema`  | string | No       | Path or URL to the JSON Schema (enables editor autocompletion) |
-| `commands` | array  | Yes      | List of command definitions (minimum 1)                  |
+| Field               | Type     | Required | Description                                                                    |
+| ------------------- | -------- | -------- | ------------------------------------------------------------------------------ |
+| `$schema`           | string   | No       | Path or URL to the JSON Schema (enables editor autocompletion)                 |
+| `commands`          | array    | Yes      | List of command definitions (minimum 1)                                        |
+| `allowedOperations` | string[] | No       | Operations normally blocked by the guard that this config explicitly permits   |
+| `protectedBranches` | string[] | No       | Branch names that must never be deleted (requires `branch:delete` to be useful)|
 
 ## Command Definition
 
@@ -145,6 +149,41 @@ The following are **blocked**:
 
 Any config file or runtime invocation containing these will be rejected with a `DestructiveCommandError`.
 
+### Allowed Operations
+
+By default, all destructive git operations are blocked. The `allowedOperations` field lets you opt in to specific write operations for workflows like code review:
+
+| Value            | Unblocks                                     |
+| ---------------- | -------------------------------------------- |
+| `"merge"`        | `git merge`                                  |
+| `"rebase"`       | `git rebase`                                 |
+| `"checkout"`     | `git checkout`                               |
+| `"switch"`       | `git switch`                                 |
+| `"branch:delete"`| `branch -d`, `branch -D`, `branch --delete` |
+
+Other destructive operations (e.g. `push`, `commit`, `reset`) **cannot** be unblocked.
+
+```json
+{
+  "allowedOperations": ["merge", "rebase", "checkout", "branch:delete"],
+  "commands": [...]
+}
+```
+
+### Protected Branches
+
+When `branch:delete` is allowed, you can protect critical branches from accidental deletion:
+
+```json
+{
+  "allowedOperations": ["branch:delete"],
+  "protectedBranches": ["main", "master", "develop", "release"],
+  "commands": [...]
+}
+```
+
+Any attempt to delete a protected branch (via `branch -d`, `-D`, or `--delete`) will be rejected at runtime with a `DestructiveCommandError`, even when `branch:delete` is in `allowedOperations`.
+
 ### Execution Limits
 
 - **Timeout:** 30 seconds per command
@@ -205,6 +244,7 @@ See the [`examples/`](../examples/) directory for ready-to-use configurations:
 | [`minimal.config.json`](../examples/minimal.config.json)       | Bare minimum — status and log only         |
 | [`full.config.json`](../examples/full.config.json)             | All 7 default commands                     |
 | [`code-review.config.json`](../examples/code-review.config.json) | Focused on diff, blame, and log for reviews |
+| [`code-review-workflow.config.json`](../examples/code-review-workflow.config.json) | Full code review with merge, rebase, and branch delete |
 | [`history.config.json`](../examples/history.config.json)       | Repository history exploration             |
 
 To use an example, copy it to your project root:
