@@ -1,0 +1,119 @@
+{
+  "name": "gitpride-vscode",
+  "displayName": "GitPride — MCP Git Server",
+  "description": "Configure and manage the gitpride MCP server for AI-assisted git workflows directly from VS Code.",
+  "version": "0.1.0",
+  "publisher": "nikan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nikan/gitpride.git",
+    "directory": "vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "SCM Providers"
+  ],
+  "keywords": [
+    "git",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "copilot",
+    "gitpride"
+  ],
+  "icon": "assets/icon.png",
+  "activationEvents": [
+    "workspaceContains:**/.git"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitpride.bootstrapMcpConfig",
+        "title": "GitPride: Bootstrap MCP Configuration"
+      },
+      {
+        "command": "gitpride.createStarterConfig",
+        "title": "GitPride: Create Starter commands.config.json"
+      },
+      {
+        "command": "gitpride.startServer",
+        "title": "GitPride: Start Server"
+      },
+      {
+        "command": "gitpride.stopServer",
+        "title": "GitPride: Stop Server"
+      },
+      {
+        "command": "gitpride.restartServer",
+        "title": "GitPride: Restart Server"
+      },
+      {
+        "command": "gitpride.showStatus",
+        "title": "GitPride: Show Server Status"
+      },
+      {
+        "command": "gitpride.showDiagnostics",
+        "title": "GitPride: Show Diagnostics"
+      }
+    ],
+    "configuration": {
+      "title": "GitPride",
+      "properties": {
+        "gitpride.configPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to commands.config.json. Leave empty to use workspace root or GITPRIDE_CONFIG env var."
+        },
+        "gitpride.startupMode": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "auto"
+          ],
+          "default": "manual",
+          "description": "Whether to start the gitpride server automatically when the workspace opens."
+        },
+        "gitpride.serverCommand": {
+          "type": "string",
+          "default": "npx gitpride",
+          "description": "Command used to start the gitpride server. Advanced: change only if you need a custom binary or path."
+        },
+        "gitpride.minimumVersion": {
+          "type": "string",
+          "default": "0.1.0",
+          "description": "Minimum required gitpride version. The extension warns if the server version is below this."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -watch -p tsconfig.json",
+    "lint": "eslint 'src/**/*.ts' 'tests/**/*.ts'",
+    "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts' '*.json'",
+    "test:unit": "vitest run",
+    "test:integration": "node ./out/test/runIntegration.js",
+    "test": "npm run test:unit",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^8.32.0",
+    "@typescript-eslint/parser": "^8.32.0",
+    "@vscode/test-electron": "^2.4.0",
+    "@vscode/vsce": "^3.3.2",
+    "eslint": "^8.57.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
