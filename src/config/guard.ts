@@ -244,6 +244,7 @@ export function validateCommandArgs(command: CommandConfig, opts?: GuardOptions)
   checkShellOperators(command.name, command.args);
   checkDestructiveSubcommand(command.name, command.args, opts);
   checkBlockedSequences(command.name, command.args, opts);
+  checkProtectedBranches(command.name, command.args, opts);
 }
 
 /**
@@ -258,6 +259,7 @@ export function validateExtraArgs(
   checkShellOperators(commandName, extraArgs);
   checkDestructiveSubcommand(commandName, extraArgs, opts);
   checkBlockedSequences(commandName, extraArgs, opts);
+  checkProtectedBranches(commandName, extraArgs, opts);
 }
 
 /**

@@ -3,6 +3,7 @@ import {
   validateCommandArgs,
   validateExtraArgs,
   validateCombinedArgs,
+  buildGuardOptions,
   DestructiveCommandError,
   BLOCKED_SUBCOMMANDS,
   BLOCKED_ARG_SEQUENCES,
@@ -251,5 +252,62 @@ describe('newly blocked arg sequences (issue #39)', () => {
       const found = BLOCKED_ARG_SEQUENCES.some(([f, s]) => f === first && s === second);
       expect(found, `expected [${first}, ${second}] in BLOCKED_ARG_SEQUENCES`).toBe(true);
     }
+  });
+});
+
+describe('protected branches in validateCommandArgs', () => {
+  it('should block deletion of a protected branch in base args', () => {
+    const opts = buildGuardOptions(['branch:delete'], ['main', 'master']);
+    expect(() =>
+      validateCommandArgs(makeCommand({ args: ['branch', '-d', 'main'] }), opts),
+    ).toThrow(DestructiveCommandError);
+  });
+
+  it('should block force-deletion of a protected branch in base args', () => {
+    const opts = buildGuardOptions(['branch:delete'], ['main']);
+    expect(() =>
+      validateCommandArgs(makeCommand({ args: ['branch', '-D', 'main'] }), opts),
+    ).toThrow(DestructiveCommandError);
+  });
+
+  it('should block --delete of a protected branch in base args', () => {
+    const opts = buildGuardOptions(['branch:delete'], ['develop']);
+    expect(() =>
+      validateCommandArgs(makeCommand({ args: ['branch', '--delete', 'develop'] }), opts),
+    ).toThrow(DestructiveCommandError);
+  });
+
+  it('should allow deletion of a non-protected branch in base args', () => {
+    const opts = buildGuardOptions(['branch:delete'], ['main', 'master']);
+    expect(() =>
+      validateCommandArgs(makeCommand({ args: ['branch', '-d', 'feature/foo'] }), opts),
+    ).not.toThrow();
+  });
+
+  it('should include the protected branch name in the error', () => {
+    const opts = buildGuardOptions(['branch:delete'], ['main']);
+    try {
+      validateCommandArgs(makeCommand({ args: ['branch', '-d', 'main'] }), opts);
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(DestructiveCommandError);
+      expect((err as DestructiveCommandError).message).toContain('main');
+    }
+  });
+});
+
+describe('protected branches in validateExtraArgs', () => {
+  it('should block deletion of a protected branch in extra args', () => {
+    const opts = buildGuardOptions(['branch:delete'], ['main']);
+    expect(() =>
+      validateExtraArgs('git_branch', ['branch', '-d', 'main'], opts),
+    ).toThrow(DestructiveCommandError);
+  });
+
+  it('should allow deletion of a non-protected branch in extra args', () => {
+    const opts = buildGuardOptions(['branch:delete'], ['main']);
+    expect(() =>
+      validateExtraArgs('git_branch', ['branch', '-d', 'feature/bar'], opts),
+    ).not.toThrow();
   });
 });
