@@ -11,7 +11,7 @@
     "directory": "vscode-extension"
   },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.99.0"
   },
   "categories": [
     "Machine Learning",
@@ -91,7 +91,13 @@
           "description": "Minimum required gitpride version. The extension warns if the server version is below this."
         }
       }
-    }
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "gitpride.mcpServer",
+        "label": "GitPride"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run build",

@@ -9,33 +9,42 @@ export function activate(context: vscode.ExtensionContext): void {
   const outputChannel = vscode.window.createOutputChannel('GitPride');
   serverManager = new ServerManager(outputChannel);
 
+  const gitprideConfig = vscode.workspace.getConfiguration('gitpride');
+  const configPath = gitprideConfig.get<string>('configPath') || '';
+  const serverCommand = gitprideConfig.get<string>('serverCommand') || 'npx gitpride';
+
+  const provider: vscode.McpServerDefinitionProvider = {
+    async provideMcpServerDefinitions() {
+      const env: Record<string, string> = {};
+      if (configPath) {
+        env.GITPRIDE_CONFIG = configPath;
+      }
+
+      return [
+        new vscode.McpStdioServerDefinition('GitPride', 'npx', ['-y', 'gitpride'], env, '0.2.0'),
+      ];
+    },
+  };
+
   context.subscriptions.push(
+    vscode.lm.registerMcpServerDefinitionProvider('gitpride.mcpServer', provider),
     outputChannel,
     vscode.commands.registerCommand('gitpride.bootstrapMcpConfig', () =>
-      bootstrapMcpConfig(outputChannel)
+      bootstrapMcpConfig(outputChannel),
     ),
     vscode.commands.registerCommand('gitpride.createStarterConfig', () =>
-      createStarterConfig(outputChannel)
+      createStarterConfig(outputChannel),
     ),
-    vscode.commands.registerCommand('gitpride.startServer', () =>
-      serverManager!.start()
-    ),
-    vscode.commands.registerCommand('gitpride.stopServer', () =>
-      serverManager!.stop()
-    ),
-    vscode.commands.registerCommand('gitpride.restartServer', () =>
-      serverManager!.restart()
-    ),
-    vscode.commands.registerCommand('gitpride.showStatus', () =>
-      showStatus(serverManager!)
-    ),
+    vscode.commands.registerCommand('gitpride.startServer', () => serverManager!.start()),
+    vscode.commands.registerCommand('gitpride.stopServer', () => serverManager!.stop()),
+    vscode.commands.registerCommand('gitpride.restartServer', () => serverManager!.restart()),
+    vscode.commands.registerCommand('gitpride.showStatus', () => showStatus(serverManager!)),
     vscode.commands.registerCommand('gitpride.showDiagnostics', () =>
-      showDiagnostics(serverManager!, outputChannel)
-    )
+      showDiagnostics(serverManager!, outputChannel),
+    ),
   );
 
-  const config = vscode.workspace.getConfiguration('gitpride');
-  if (config.get<string>('startupMode') === 'auto') {
+  if (gitprideConfig.get<string>('startupMode') === 'auto') {
     serverManager.start();
   }
 
