@@ -20,9 +20,8 @@ export function activate(context: vscode.ExtensionContext): void {
         env.GITPRIDE_CONFIG = configPath;
       }
 
-      return [
-        new vscode.McpStdioServerDefinition('GitPride', 'npx', ['-y', 'gitpride'], env, '0.2.0'),
-      ];
+      outputChannel.appendLine('[MCP] Registering GitPride server definition');
+      return [new vscode.McpStdioServerDefinition('GitPride', 'npx', ['-y', 'gitpride'], env)];
     },
   };
 
