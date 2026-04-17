@@ -245,13 +245,13 @@ cp node_modules/gitpride/examples/code-review-workflow.config.json commands.conf
 
 The **`code-review.config.json`** profile exposes only non-destructive commands so the AI can inspect code without making changes:
 
-| Tool         | Purpose                          |
-| ------------ | -------------------------------- |
-| `git_diff`   | Compare changes across refs      |
-| `git_log`    | Browse recent commits            |
-| `git_show`   | Inspect a specific commit        |
-| `git_blame`  | Identify who changed each line   |
-| `git_branch` | List branches                    |
+| Tool         | Purpose                        |
+| ------------ | ------------------------------ |
+| `git_diff`   | Compare changes across refs    |
+| `git_log`    | Browse recent commits          |
+| `git_show`   | Inspect a specific commit      |
+| `git_blame`  | Identify who changed each line |
+| `git_branch` | List branches                  |
 
 The **`code-review-workflow.config.json`** profile extends the above with controlled write operations (`merge`, `rebase`, `checkout`, `branch -d`) using `allowedOperations` and `protectedBranches` guards:
 
@@ -283,11 +283,28 @@ Validation runs both at config load time and at runtime before each command exec
 
 ## VS Code Extension
 
-The **GitPride VS Code extension** provides an integrated experience for configuring and managing the gitpride MCP server directly from your editor.
+The **GitPride VS Code extension** provides an integrated experience for configuring and managing the gitpride MCP server directly from your editor. The extension appears under **MCP Servers** in the VS Code Extensions sidebar.
+
+### Installation
+
+The extension is not published to the VS Code Marketplace. Install from a `.vsix` file:
+
+```bash
+# Build the .vsix package
+cd vscode-extension
+npm install
+npm run package
+
+# Install in VS Code (GUI)
+# Extensions sidebar → ... menu → Install from VSIX...
+
+# Or via command line
+code --install-extension out/gitpride-vscode-*.vsix
+```
 
 ### Quick Start
 
-1. Install the extension from the VS Code Marketplace (search for **"GitPride"**)
+1. Install the extension (see above)
 2. Open a git repository in VS Code
 3. Run `GitPride: Bootstrap MCP Configuration` from the Command Palette (`Ctrl+Shift+P`)
 4. Run `GitPride: Start Server` to launch the MCP server

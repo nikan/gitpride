@@ -14,12 +14,14 @@
     "vscode": "^1.85.0"
   },
   "categories": [
+    "Machine Learning",
     "Other",
     "SCM Providers"
   ],
   "keywords": [
     "git",
     "mcp",
+    "mcp-server",
     "model-context-protocol",
     "ai",
     "copilot",
