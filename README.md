@@ -291,15 +291,13 @@ The extension is not published to the VS Code Marketplace. Install from a `.vsix
 
 ```bash
 # Build the .vsix package
-cd vscode-extension
-npm install
-npm run package
+npm run package:vsix
 
 # Install in VS Code (GUI)
 # Extensions sidebar → ... menu → Install from VSIX...
 
 # Or via command line
-code --install-extension out/gitpride-vscode-*.vsix
+code --install-extension vscode-extension/out/gitpride-vscode-*.vsix
 ```
 
 ### Quick Start
